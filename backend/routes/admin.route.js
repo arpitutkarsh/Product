@@ -5,20 +5,20 @@ import {
   refreshToken,
   logoutAdmin,
 } from "../controllers/admin.controller.js";
-import protect from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
+// Public
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 
-// refresh does NOT need protect
+// Public (cookies auto handled)
 router.post("/refreshToken", refreshToken);
 
-// logout does NOT need protect anymore
+// Public logout (token invalidation done in controller)
 router.post("/logout", logoutAdmin);
 
-// add protected routes here
-// router.get("/profile", protect, profileController);
+// Example protected route (use later)
+// router.get("/profile", protect, getProfile);
 
 export default router;

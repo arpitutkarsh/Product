@@ -9,19 +9,20 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await axiosInstance.post("/admin/login", {
-        email,
-        password,
-      });
+      const res = await axiosInstance.post(
+        "/admin/login",
+        { email, password },
+        { withCredentials: true } // 🔥 REQUIRED for cookies
+      );
 
       if (res.data.success) {
-        sessionStorage.setItem("adminToken", res.data.data.accessToken);
-        navigate("/home");
+        navigate("/home"); // No need to store tokens. Cookies handled automatically.
       }
     } catch (error) {
       console.error(error);
-      alert("Login failed. Check credentials!");
+      alert("Login failed. Check your credentials!");
     }
   };
 
@@ -35,32 +36,38 @@ function Login() {
         </p>
         <ul className="space-y-2 text-lg z-10 relative">
           <li className="flex items-center">
-            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">✓</span>
+            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">
+              ✓
+            </span>
             See Products
           </li>
           <li className="flex items-center">
-            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">✓</span>
+            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">
+              ✓
+            </span>
             Add Products
           </li>
           <li className="flex items-center">
-            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">✓</span>
+            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">
+              ✓
+            </span>
             Update Products
           </li>
           <li className="flex items-center">
-            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">✓</span>
+            <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">
+              ✓
+            </span>
             Delete Products
           </li>
         </ul>
 
-        {/* Left-side pink bubbles */}
         <div className="absolute w-36 h-36 bg-pink-400 rounded-full opacity-30 top-[-50px] left-[-50px] animate-pulseSlow"></div>
         <div className="absolute w-48 h-48 bg-pink-300 rounded-full opacity-20 bottom-[-80px] right-[-60px] animate-pulseSlow"></div>
         <div className="absolute w-24 h-24 bg-pink-500 rounded-full opacity-25 top-[150px] right-[50px] animate-pulseSlow"></div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side */}
       <div className="flex-1 flex justify-center items-center bg-gray-100 relative overflow-hidden">
-        {/* Right-side pink bubbles */}
         <div className="absolute w-32 h-32 bg-pink-400 rounded-full opacity-20 top-[-40px] right-[30px] animate-pulseSlow"></div>
         <div className="absolute w-48 h-48 bg-pink-300 rounded-full opacity-15 bottom-[20px] left-[50px] animate-pulseSlow"></div>
         <div className="absolute w-24 h-24 bg-pink-500 rounded-full opacity-25 top-[100px] left-[20px] animate-pulseSlow"></div>
@@ -108,7 +115,6 @@ function Login() {
         </form>
       </div>
 
-      {/* Tailwind Animation */}
       <style>{`
         @keyframes pulseSlow {
           0%, 100% { transform: scale(1); opacity: 0.2; }

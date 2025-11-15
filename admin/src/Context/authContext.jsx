@@ -8,7 +8,9 @@ export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Login (cookies automatically saved by browser)
+  // ============================
+  // ✅ LOGIN
+  // ============================
   const login = async (email, password) => {
     try {
       const res = await axiosInstance.post("/admin/login", {
@@ -18,6 +20,7 @@ export const AuthProvider = ({ children }) => {
 
       const adminData = res.data.data;
       setAdmin(adminData);
+
       sessionStorage.setItem("adminData", JSON.stringify(adminData));
 
       navigate("/home");
@@ -27,12 +30,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Logout (clears cookie + local state)
+  // ============================
+  // ✅ LOGOUT
+  // ============================
   const logout = async () => {
     try {
       await axiosInstance.post("/admin/logout");
     } catch (err) {
-      console.warn("Logout failed but clearing state");
+      console.warn("Logout request failed but clearing local session.");
     }
 
     sessionStorage.removeItem("adminData");
@@ -40,7 +45,9 @@ export const AuthProvider = ({ children }) => {
     navigate("/");
   };
 
-  // ✅ Restore admin from session or backend
+  // ============================
+  // ✅ RESTORE SESSION ON REFRESH
+  // ============================
   useEffect(() => {
     const stored = sessionStorage.getItem("adminData");
 
@@ -49,12 +56,13 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // Otherwise check backend
     const checkAuth = async () => {
       try {
         const res = await axiosInstance.get("/admin/profile");
-        setAdmin(res.data.data);
-        sessionStorage.setItem("adminData", JSON.stringify(res.data.data));
+        const adminData = res.data.data;
+
+        setAdmin(adminData);
+        sessionStorage.setItem("adminData", JSON.stringify(adminData));
       } catch (err) {
         setAdmin(null);
       }
@@ -63,17 +71,19 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // ✅ Auto refresh access token every 10 min
+  // ============================
+  // ✅ AUTO REFRESH TOKEN
+  // ============================
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         await axiosInstance.post("/admin/refreshToken");
-        console.log("🔄 Access token refreshed");
+        console.log("🔄 Token refreshed");
       } catch (err) {
-        console.warn("Refresh failed — logging out");
-        logout();
+        console.warn("Refresh failed — Logging out...");
+        logout(); // Only logs out once — safe
       }
-    }, 10 * 60 * 1000);
+    }, 10 * 60 * 1000); // every 10 min
 
     return () => clearInterval(interval);
   }, []);

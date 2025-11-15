@@ -2,21 +2,21 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: "https://backend-9lc5.onrender.com/api/ver1",
-  withCredentials: true, // to include cookies if your auth uses them
+  withCredentials: true,
 });
 
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve();
+  failedQueue.forEach((p) => {
+    if (error) p.reject(error);
+    else p.resolve();
   });
   failedQueue = [];
 };
 
-// Interceptor for 401 errors (token expired)
+// Interceptor for auto-refresh token
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -28,26 +28,21 @@ axiosInstance.interceptors.response.use(
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then(() => axiosInstance(originalRequest))
-          .catch(Promise.reject);
+        }).then(() => axiosInstance(originalRequest));
       }
 
       isRefreshing = true;
 
       try {
-        // 🔁 Request new access token using refresh token
         await axiosInstance.post("/admin/refreshToken");
-
         processQueue();
-        return axiosInstance(originalRequest); // retry the failed request
-      } catch (refreshError) {
-        console.error("Token refresh failed:", refreshError);
-        processQueue(refreshError, null);
+        return axiosInstance(originalRequest);
+      } catch (err) {
+        processQueue(err);
 
-        // Logout and redirect if refresh fails
-        sessionStorage.removeItem("adminData");
+        // Token refresh failed → force logout
         window.location.href = "/";
+        return Promise.reject(err);
       } finally {
         isRefreshing = false;
       }
