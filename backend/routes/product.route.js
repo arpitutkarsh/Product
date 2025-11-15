@@ -14,7 +14,7 @@ const router = Router();
 
 // Add a new product (with images/videos)
 router.post(
-  "/",
+  "/addProduct",
   protect,
   upload.fields([
     { name: "images", maxCount: 10 },
@@ -24,7 +24,7 @@ router.post(
 );
 
 // Get all products
-router.get("/", getAllProduct);
+router.get("/getAllProduct", getAllProduct);
 
 // Get product by database ID
 router.get("/id/:id", getProductById);
@@ -44,6 +44,6 @@ router.put(
 );
 
 // Delete product by ID
-router.delete("/:id", protect, deleteProduct);
+router.delete("/delete/:id", protect, deleteProduct);
 
 export default router;
