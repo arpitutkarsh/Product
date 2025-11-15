@@ -9,9 +9,16 @@ import protect from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(registerAdmin);
-router.route("/login").post(loginAdmin);
-router.route("/logout").post(protect, logoutAdmin);
-router.route("/refreshToken").post(refreshToken);
+router.post("/register", registerAdmin);
+router.post("/login", loginAdmin);
+
+// refresh does NOT need protect
+router.post("/refreshToken", refreshToken);
+
+// logout does NOT need protect anymore
+router.post("/logout", logoutAdmin);
+
+// add protected routes here
+// router.get("/profile", protect, profileController);
 
 export default router;

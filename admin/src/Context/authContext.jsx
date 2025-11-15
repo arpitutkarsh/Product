@@ -8,66 +8,72 @@ export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Login
+  // ✅ Login (cookies automatically saved by browser)
   const login = async (email, password) => {
     try {
-      const res = await axiosInstance.post("/admin/login", { email, password });
+      const res = await axiosInstance.post("/admin/login", {
+        email,
+        password,
+      });
 
-      // Backend sets httpOnly cookies
       const adminData = res.data.data;
       setAdmin(adminData);
       sessionStorage.setItem("adminData", JSON.stringify(adminData));
 
       navigate("/home");
-    } catch (err) {
-      console.error("Login failed:", err);
+    } catch (error) {
+      console.log("Login failed:", error);
       alert("Invalid credentials");
     }
   };
 
-  // ✅ Logout
+  // ✅ Logout (clears cookie + local state)
   const logout = async () => {
     try {
       await axiosInstance.post("/admin/logout");
-    } catch (error) {
-      console.warn("Logout failed (clearing local state anyway).");
-    } finally {
-      sessionStorage.removeItem("adminData");
-      setAdmin(null);
-      navigate("/");
+    } catch (err) {
+      console.warn("Logout failed but clearing state");
     }
+
+    sessionStorage.removeItem("adminData");
+    setAdmin(null);
+    navigate("/");
   };
 
-  // ✅ Auto-restore session on page refresh
+  // ✅ Restore admin from session or backend
   useEffect(() => {
-    const storedAdmin = sessionStorage.getItem("adminData");
-    if (storedAdmin) {
-      setAdmin(JSON.parse(storedAdmin));
-    } else {
-      const checkAuth = async () => {
-        try {
-          const res = await axiosInstance.get("/admin/profile");
-          setAdmin(res.data.data);
-          sessionStorage.setItem("adminData", JSON.stringify(res.data.data));
-        } catch {
-          setAdmin(null);
-        }
-      };
-      checkAuth();
+    const stored = sessionStorage.getItem("adminData");
+
+    if (stored) {
+      setAdmin(JSON.parse(stored));
+      return;
     }
+
+    // Otherwise check backend
+    const checkAuth = async () => {
+      try {
+        const res = await axiosInstance.get("/admin/profile");
+        setAdmin(res.data.data);
+        sessionStorage.setItem("adminData", JSON.stringify(res.data.data));
+      } catch (err) {
+        setAdmin(null);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  // ✅ Auto-refresh access token every 10 minutes
+  // ✅ Auto refresh access token every 10 min
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         await axiosInstance.post("/admin/refreshToken");
-        console.log("🔄 Access token refreshed (background)");
+        console.log("🔄 Access token refreshed");
       } catch (err) {
-        console.warn("Auto-refresh failed:", err);
+        console.warn("Refresh failed — logging out");
         logout();
       }
-    }, 10 * 60 * 1000); // every 10 minutes
+    }, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
