@@ -2,7 +2,7 @@ import { Router } from "express";
 import { protect } from "../middlewares/auth.middleware.js";
 import {
   addCategory,
-  getCategories,
+  getCategory,
   deleteCategory,
 } from "../controllers/category.controller.js";
 
@@ -12,7 +12,7 @@ const router = Router();
 router.post("/", protect, addCategory);
 
 // Get all categories
-router.get("/", getCategories);
+router.get("/", getCategory);
 
 // Delete a category by ID
 router.delete("/:id", protect, deleteCategory);
