@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import protect from "../middlewares/auth.middleware.js";
+import {protect} from "../middlewares/auth.middleware.js";
 import {
   addProduct,
   getAllProduct,
