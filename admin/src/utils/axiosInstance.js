@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8000/api/ver1",
-  withCredentials: true,
+  baseURL: "https://backend-9lc5.onrender.com/api/ver1",
+  withCredentials: true, // to include cookies if your auth uses them
 });
 
 let isRefreshing = false;
@@ -22,7 +22,6 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only handle access token expiry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -46,7 +45,7 @@ axiosInstance.interceptors.response.use(
         console.error("Token refresh failed:", refreshError);
         processQueue(refreshError, null);
 
-        // If refresh also fails, logout and redirect
+        // Logout and redirect if refresh fails
         sessionStorage.removeItem("adminData");
         window.location.href = "/";
       } finally {

@@ -16,7 +16,7 @@ const SideBar = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:8000/api/ver1/admin/logout",
+        "https://backend-9lc5.onrender.com/api/ver1/admin/logout",
         {},
         { withCredentials: true }
       );

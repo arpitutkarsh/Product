@@ -7,13 +7,14 @@ const AddCategory = () => {
   const [newCategory, setNewCategory] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1";
+
   // Fetch all categories
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8000/api/ver1/category/getCategory",
-        { withCredentials: true }
-      );
+      const res = await axios.get(`${BASE_URL}/category/getCategory`, {
+        withCredentials: true,
+      });
       setCategories(res.data.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -33,7 +34,7 @@ const AddCategory = () => {
     try {
       setLoading(true);
       const res = await axios.post(
-        "http://localhost:8000/api/ver1/category/addCategory",
+        `${BASE_URL}/category/addCategory`,
         { name: newCategory },
         { withCredentials: true }
       );
@@ -56,10 +57,9 @@ const AddCategory = () => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
 
     try {
-      await axios.delete(
-        `http://localhost:8000/api/ver1/category/deleteCategory/${id}`,
-        { withCredentials: true }
-      );
+      await axios.delete(`${BASE_URL}/category/deleteCategory/${id}`, {
+        withCredentials: true,
+      });
       alert("Category deleted successfully");
       setCategories(categories.filter((cat) => cat._id !== id));
     } catch (error) {
@@ -80,7 +80,7 @@ const AddCategory = () => {
         {/* 📝 Admin Note */}
         <div className="max-w-2xl mx-auto mb-8 bg-yellow-50 border border-yellow-300 rounded-xl p-4 shadow-sm">
           <p className="text-yellow-800 font-medium text-center">
-             <strong>Note for Admin:</strong> Please do not delete existing categories 
+            <strong>Note for Admin:</strong> Please do not delete existing categories 
             to ensure seamless service for users and avoid data inconsistency.
           </p>
         </div>

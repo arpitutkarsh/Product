@@ -40,7 +40,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
       newVideos.forEach((vid) => updateForm.append("videos", vid));
 
       const res = await axios.put(
-        `http://localhost:8000/api/ver1/product/updateProduct/${product._id}`,
+        `https://backend-9lc5.onrender.com/api/ver1/product/updateProduct/${product._id}`,
         updateForm,
         {
           headers: { "Content-Type": "multipart/form-data" },

@@ -15,13 +15,14 @@ const AddProduct = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1";
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:8000/api/ver1/category/getCategory",
-          { withCredentials: true }
-        );
+        const res = await axios.get(`${BASE_URL}/category/getCategory`, {
+          withCredentials: true,
+        });
         setCategories(res.data.data || []);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -61,14 +62,10 @@ const AddProduct = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        "http://localhost:8000/api/ver1/product/addProduct",
-        data,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        }
-      );
+      const res = await axios.post(`${BASE_URL}/product/addProduct`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
 
       if (res.status === 201) {
         alert("✅ Product added successfully!");
@@ -114,7 +111,6 @@ const AddProduct = () => {
               />
             )}
 
-            {/* Hover minus button */}
             <button
               type="button"
               onClick={() => {
@@ -152,18 +148,18 @@ const AddProduct = () => {
               </h3>
               <ul className="list-decimal list-inside space-y-2 text-gray-700 text-sm">
                 <li><strong>Product ID:</strong> Must be unique for each product.</li>
-  <li><strong>Images:</strong> Minimum resolution of <strong>800x800px</strong> for clarity.</li>
-  <li><strong>Videos:</strong> Maximum resolution of <strong>720p</strong> to ensure smooth playback.</li>
-  <li><strong>File Limits:</strong> You can upload up to <strong>10 images</strong> and <strong>10 videos</strong> per product.</li>
-  <li><strong>Accepted Image Formats:</strong> JPG, JPEG, PNG, WEBP.</li>
-  <li><strong>Accepted Video Formats:</strong> MP4, MOV, AVI.</li>
-  <li><strong>Maximum File Size:</strong> Each image or video must not exceed <strong>15MB</strong>.</li>
-  <li><strong>Category:</strong> Ensure the selected category accurately represents the product type.</li>
-  <li><strong>Tip:</strong> High-quality media improves product visibility and customer trust.</li>
-  <li><strong>Warning:</strong> Uploading incorrect formats or exceeding file limits may result in failed uploads.</li>
+                <li><strong>Images:</strong> Minimum resolution of <strong>800x800px</strong>.</li>
+                <li><strong>Videos:</strong> Max resolution <strong>720p</strong>.</li>
+                <li><strong>File Limits:</strong> Up to <strong>10 images</strong> & <strong>10 videos</strong>.</li>
+                <li><strong>Accepted Image Formats:</strong> JPG, JPEG, PNG, WEBP.</li>
+                <li><strong>Accepted Video Formats:</strong> MP4, MOV, AVI.</li>
+                <li><strong>Max File Size:</strong> 15MB per file.</li>
+                <li><strong>Category:</strong> Select accurately.</li>
+                <li><strong>Tip:</strong> High-quality media improves visibility & trust.</li>
+                <li><strong>Warning:</strong> Wrong formats or exceeding limits may fail uploads.</li>
               </ul>
               <p className="mt-3 text-xs italic text-yellow-800">
-                Tip: Use descriptive filenames like <strong>red_shoe_01.jpg</strong> and wait for uploads to complete.
+                Tip: Use descriptive filenames like <strong>red_shoe_01.jpg</strong>.
               </p>
             </div>
 
