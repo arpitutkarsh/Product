@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import SideBar from "../Components/SideBar.jsx";
+import axiosInstance from "../utils/axiosInstance.js";
 
 const AddCategory = () => {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1";
-
   // Fetch all categories
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/category/getCategory`, {
-        withCredentials: true,
-      });
+      const res = await axiosInstance.get("/category/getCategory");
       setCategories(res.data.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -33,11 +29,9 @@ const AddCategory = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${BASE_URL}/category/addCategory`,
-        { name: newCategory },
-        { withCredentials: true }
-      );
+      const res = await axiosInstance.post("/category/addCategory", {
+        name: newCategory,
+      });
 
       if (res.status === 200) {
         alert("Category added successfully!");
@@ -57,9 +51,7 @@ const AddCategory = () => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
 
     try {
-      await axios.delete(`${BASE_URL}/category/deleteCategory/${id}`, {
-        withCredentials: true,
-      });
+      await axiosInstance.delete(`/category/deleteCategory/${id}`);
       alert("Category deleted successfully");
       setCategories(categories.filter((cat) => cat._id !== id));
     } catch (error) {

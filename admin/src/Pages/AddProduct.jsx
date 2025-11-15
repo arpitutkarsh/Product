@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import SideBar from "../Components/SideBar.jsx";
+import axiosInstance from "../utils/axiosInstance.js";
 
 const AddProduct = () => {
   const [categories, setCategories] = useState([]);
@@ -14,15 +14,13 @@ const AddProduct = () => {
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1";
+  const [imageProgress, setImageProgress] = useState(0);
+  const [videoProgress, setVideoProgress] = useState(0);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/category/getCategory`, {
-          withCredentials: true,
-        });
+        const res = await axiosInstance.get("/category/getCategory");
         setCategories(res.data.data || []);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -37,8 +35,16 @@ const AddProduct = () => {
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    if (name === "images") setImages([...files]);
-    if (name === "videos") setVideos([...files]);
+
+    if (name === "images") {
+      if (files.length > 10) return alert("Max 10 images allowed");
+      setImages([...files]);
+    }
+
+    if (name === "videos") {
+      if (files.length > 10) return alert("Max 10 videos allowed");
+      setVideos([...files]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -51,8 +57,7 @@ const AddProduct = () => {
       !formData.link ||
       !formData.category
     ) {
-      alert("Please fill in all required fields.");
-      return;
+      return alert("Please fill in all required fields.");
     }
 
     const data = new FormData();
@@ -62,22 +67,31 @@ const AddProduct = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(`${BASE_URL}/product/addProduct`, data, {
+      setImageProgress(0);
+      setVideoProgress(0);
+
+      const res = await axiosInstance.post("/product/addProduct", data, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
+        onUploadProgress: (progressEvent) => {
+          const total = progressEvent.total || 1;
+          const percent = Math.round((progressEvent.loaded * 100) / total);
+
+          if (images.length && !videos.length) setImageProgress(percent);
+          else if (videos.length && !images.length) setVideoProgress(percent);
+          else {
+            setImageProgress(percent / 2);
+            setVideoProgress(percent / 2);
+          }
+        },
       });
 
       if (res.status === 201) {
         alert("✅ Product added successfully!");
-        setFormData({
-          title: "",
-          description: "",
-          productId: "",
-          link: "",
-          category: "",
-        });
+        setFormData({ title: "", description: "", productId: "", link: "", category: "" });
         setImages([]);
         setVideos([]);
+        setImageProgress(0);
+        setVideoProgress(0);
       }
     } catch (error) {
       console.error("Error adding product:", error);
@@ -87,7 +101,6 @@ const AddProduct = () => {
     }
   };
 
-  // Render image/video previews with hover minus button
   const renderPreviews = (files, type, setFiles) => {
     if (!files.length) return null;
     return (
@@ -141,29 +154,6 @@ const AddProduct = () => {
               Add New Product
             </h2>
 
-            {/* Important Notes */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-xl mb-8 shadow-md">
-              <h3 className="text-xl font-semibold text-yellow-700 mb-4">
-                ⚠ Important Notes
-              </h3>
-              <ul className="list-decimal list-inside space-y-2 text-gray-700 text-sm">
-                <li><strong>Product ID:</strong> Must be unique for each product.</li>
-                <li><strong>Images:</strong> Minimum resolution of <strong>800x800px</strong>.</li>
-                <li><strong>Videos:</strong> Max resolution <strong>720p</strong>.</li>
-                <li><strong>File Limits:</strong> Up to <strong>10 images</strong> & <strong>10 videos</strong>.</li>
-                <li><strong>Accepted Image Formats:</strong> JPG, JPEG, PNG, WEBP.</li>
-                <li><strong>Accepted Video Formats:</strong> MP4, MOV, AVI.</li>
-                <li><strong>Max File Size:</strong> 15MB per file.</li>
-                <li><strong>Category:</strong> Select accurately.</li>
-                <li><strong>Tip:</strong> High-quality media improves visibility & trust.</li>
-                <li><strong>Warning:</strong> Wrong formats or exceeding limits may fail uploads.</li>
-              </ul>
-              <p className="mt-3 text-xs italic text-yellow-800">
-                Tip: Use descriptive filenames like <strong>red_shoe_01.jpg</strong>.
-              </p>
-            </div>
-
-            {/* Inputs */}
             <div className="space-y-4">
               <input
                 type="text"
@@ -231,6 +221,9 @@ const AddProduct = () => {
                   className="w-full border border-gray-300 rounded-xl p-3"
                 />
                 {renderPreviews(images, "image", setImages)}
+                {loading && imageProgress > 0 && (
+                  <p className="text-sm text-gray-700 mt-1">Uploading Images: {imageProgress}%</p>
+                )}
               </div>
 
               <div>
@@ -244,6 +237,9 @@ const AddProduct = () => {
                   className="w-full border border-gray-300 rounded-xl p-3"
                 />
                 {renderPreviews(videos, "video", setVideos)}
+                {loading && videoProgress > 0 && (
+                  <p className="text-sm text-gray-700 mt-1">Uploading Videos: {videoProgress}%</p>
+                )}
               </div>
             </div>
 

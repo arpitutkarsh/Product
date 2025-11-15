@@ -28,7 +28,8 @@ const ProductModal = ({ product, onClose, onProductUpdated, onProductDeleted }) 
       return alert("Please type 'delete' to confirm.");
     }
     try {
-      const res = await axiosInstance.delete(`/delete/product/${product._id}`);
+      // ✅ Use axiosInstance with cookies for auth
+      const res = await axiosInstance.delete(`/product/delete/${product._id}`);
       if (res.status === 200) {
         alert("Product deleted successfully");
         onClose();

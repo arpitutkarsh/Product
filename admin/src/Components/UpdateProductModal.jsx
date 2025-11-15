@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance.js";
 
 const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
   const [formData, setFormData] = useState({
@@ -39,24 +39,20 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
       newImages.forEach((img) => updateForm.append("images", img));
       newVideos.forEach((vid) => updateForm.append("videos", vid));
 
-      const res = await axios.put(
-        `https://backend-9lc5.onrender.com/api/ver1/product/${product._id}`,
-        updateForm,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-          onUploadProgress: (progressEvent) => {
-            const total = progressEvent.total || 1;
-            const percent = Math.round((progressEvent.loaded * 100) / total);
-            if (newImages.length && !newVideos.length) setImageProgress(percent);
-            else if (newVideos.length && !newImages.length) setVideoProgress(percent);
-            else {
-              setImageProgress(percent / 2);
-              setVideoProgress(percent / 2);
-            }
-          },
-        }
-      );
+      const res = await axiosInstance.put(`/product/${product._id}`, updateForm, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const total = progressEvent.total || 1;
+          const percent = Math.round((progressEvent.loaded * 100) / total);
+
+          if (newImages.length && !newVideos.length) setImageProgress(percent);
+          else if (newVideos.length && !newImages.length) setVideoProgress(percent);
+          else {
+            setImageProgress(percent / 2);
+            setVideoProgress(percent / 2);
+          }
+        },
+      });
 
       alert("✅ Product updated successfully");
       onProductUpdated(res.data.data);
@@ -76,6 +72,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
   return (
     <div className="fixed inset-0 flex justify-center items-center z-50 p-4 backdrop-blur-sm bg-black/40">
       <div className="w-full max-w-md md:max-w-lg bg-pink-200/20 backdrop-blur-xl border border-pink-300/30 rounded-3xl shadow-2xl p-6 overflow-y-auto max-h-[90vh] relative scrollbar-hide">
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -119,7 +116,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
             disabled={loading}
           />
 
-          {/* Existing images with glass hover effect */}
+          {/* Current Images */}
           {product.images?.length > 0 && (
             <div>
               <p className="font-semibold mb-2 text-white">Current Images</p>
@@ -129,19 +126,13 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
                     key={img}
                     className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/30 backdrop-blur-md hover:scale-105 hover:shadow-lg transition-transform"
                   >
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-full object-cover rounded-lg"
-                    />
+                    <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
                     <button
                       type="button"
                       disabled={loading}
                       onClick={() =>
                         setImagesToDelete((prev) =>
-                          prev.includes(img)
-                            ? prev.filter((i) => i !== img)
-                            : [...prev, img]
+                          prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
                         )
                       }
                       className={`absolute top-1 right-1 text-xs px-2 py-1 rounded ${
@@ -158,7 +149,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
             </div>
           )}
 
-          {/* Upload new images */}
+          {/* New Images */}
           <label className="font-semibold mt-2 text-white">Add New Images</label>
           <input
             type="file"
@@ -175,12 +166,12 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
                 <div
                   className="bg-pink-400 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${imageProgress}%` }}
-                ></div>
+                />
               </div>
             </div>
           )}
 
-          {/* Upload new videos */}
+          {/* New Videos */}
           <label className="font-semibold mt-4 text-white">Add New Videos</label>
           <input
             type="file"
@@ -197,7 +188,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
                 <div
                   className="bg-pink-400 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${videoProgress}%` }}
-                ></div>
+                />
               </div>
             </div>
           )}
@@ -216,15 +207,10 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
         </form>
       </div>
 
-      {/* Hide scrollbar with tailwind plugin */}
+      {/* Hide scrollbar */}
       <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );

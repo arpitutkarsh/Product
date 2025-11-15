@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/authContext.jsx";
-import axios from "axios";
 import { FaHome, FaPlus, FaThList, FaSignOutAlt } from "react-icons/fa";
+import axiosInstance from "../utils/axiosInstance.js"; // ✅ use axiosInstance
 
 const SideBar = () => {
   const { logout } = useAuth();
@@ -15,11 +15,9 @@ const SideBar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(
-        "https://backend-9lc5.onrender.com/api/ver1/admin/logout",
-        {},
-        { withCredentials: true }
-      );
+      // ✅ Use axiosInstance, cookies are sent automatically
+      await axiosInstance.post("/admin/logout");
+
       logout();
       navigate("/");
       alert("👋 Logged out successfully");
@@ -42,7 +40,7 @@ const SideBar = () => {
       <div className="absolute w-2 h-2 bg-yellow-500 rounded-full bottom-[150px] left-[80px] animate-twinkleDiagonal"></div>
       <div className="absolute w-1.5 h-1.5 bg-yellow-400 rounded-full bottom-[50px] right-[40px] animate-twinkleDiagonalReverse"></div>
 
-      {/* Small floating particles for starry effect */}
+      {/* Small floating particles */}
       {Array.from({ length: 15 }).map((_, i) => (
         <div
           key={i}

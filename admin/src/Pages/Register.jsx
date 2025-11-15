@@ -80,8 +80,7 @@ function Register() {
 
   return (
     <div className="relative flex justify-center items-center h-screen bg-gradient-to-r from-blue-500 to-indigo-600 overflow-hidden">
-      
-      {/* Optional: Floating circles for depth */}
+      {/* Floating circles */}
       <div className="absolute w-72 h-72 bg-white/10 rounded-full top-[-50px] left-[-50px] animate-pulseSlow"></div>
       <div className="absolute w-96 h-96 bg-white/5 rounded-full bottom-[-80px] right-[-60px] animate-pulseSlow"></div>
 
@@ -103,7 +102,6 @@ function Register() {
             required
             className="mb-3 p-3 rounded-xl border border-white/30 bg-white/20 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-300"
           />
-
           <input
             type="email"
             name="email"
@@ -113,7 +111,6 @@ function Register() {
             required
             className="mb-3 p-3 rounded-xl border border-white/30 bg-white/20 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-300"
           />
-
           <input
             type="text"
             name="phone"
@@ -123,7 +120,6 @@ function Register() {
             required
             className="mb-3 p-3 rounded-xl border border-white/30 bg-white/20 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-300"
           />
-
           <input
             type="password"
             name="password"
@@ -182,6 +178,16 @@ function Register() {
           </button>
         </form>
       )}
+
+      <style>{`
+        @keyframes pulseSlow {
+          0%, 100% { transform: scale(1); opacity: 0.2; }
+          50% { transform: scale(1.2); opacity: 0.35; }
+        }
+        .animate-pulseSlow {
+          animation: pulseSlow 6s infinite;
+        }
+      `}</style>
     </div>
   );
 }

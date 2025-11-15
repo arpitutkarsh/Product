@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Sidebar from "../Components/SideBar.jsx";
 import Navbar from "../Components/Navbar.jsx";
 import ProductCard from "../Components/ProductCard.jsx";
 import ProductModal from "../Components/ProductModal.jsx";
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "../utils/axiosInstance.js";
+
+// Memoized ProductCard for performance
+const MemoizedProductCard = React.memo(ProductCard);
 
 const Home = () => {
   const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,10 +19,7 @@ const Home = () => {
     const fetchProducts = async () => {
       try {
         const res = await axiosInstance.get("/product/getAllProduct");
-        if (res.data?.data) {
-          setProducts(res.data.data);
-          setFiltered(res.data.data);
-        }
+        if (res.data?.data) setProducts(res.data.data);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -30,22 +29,16 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  // Search handler
-  const handleSearch = (e) => {
-    const query = e.target.value.toLowerCase();
-    setSearch(query);
-    if (!query) {
-      setFiltered(products);
-    } else {
-      setFiltered(
-        products.filter(
-          (p) =>
-            p.title?.toLowerCase().includes(query) ||
-            p.category?.toLowerCase().includes(query)
-        )
-      );
-    }
-  };
+  // Filtered products using useMemo
+  const filteredProducts = useMemo(() => {
+    const query = search.toLowerCase();
+    if (!query) return products;
+    return products.filter(
+      (p) =>
+        p.title?.toLowerCase().includes(query) ||
+        p.category?.toLowerCase().includes(query)
+    );
+  }, [search, products]);
 
   return (
     <div className="relative flex bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen overflow-hidden">
@@ -56,7 +49,6 @@ const Home = () => {
 
       {/* Decorative bubbles and stars */}
       <div className="absolute top-0 left-72 right-0 bottom-0 overflow-hidden pointer-events-none z-0">
-        {/* Random bubbles */}
         {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={i}
@@ -70,8 +62,6 @@ const Home = () => {
             }}
           ></div>
         ))}
-
-        {/* Random stars */}
         {Array.from({ length: 25 }).map((_, i) => (
           <div
             key={i}
@@ -97,28 +87,35 @@ const Home = () => {
             <h2 className="text-3xl font-extrabold text-gray-800 tracking-wide">
               All Products
             </h2>
+            <label htmlFor="search" className="sr-only">Search Products</label>
             <input
+              id="search"
               type="text"
               placeholder="Search product..."
               className="border border-gray-300 p-3 rounded-lg w-full sm:w-60 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-300 shadow-sm hover:shadow-md"
               value={search}
-              onChange={handleSearch}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
           {/* Loading / No Products / Grid */}
           {loading ? (
-            <p className="text-center text-gray-600 mt-10 text-lg animate-pulse">
-              Loading products...
-            </p>
-          ) : filtered.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-60 bg-gray-200 animate-pulse rounded-xl"
+                />
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <p className="text-center text-gray-500 mt-10 text-lg">
               No products found.
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filtered.map((product) => (
-                <ProductCard
+              {filteredProducts.map((product) => (
+                <MemoizedProductCard
                   key={product._id}
                   product={product}
                   onView={setSelectedProduct}
