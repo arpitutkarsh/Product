@@ -1,20 +1,21 @@
-import { verifyAccessToken } from "../utils/token.js";
-import { Admin } from "../models/admin.model.js";
-import { ApiError } from "../utils/ApiError.js";
-export default async function protect(req, res, next) {
-    try {
-        const token = req.cookies?.accessToken
-        if(!token){
-            throw new ApiError(401, "Not Authenticated")
-        }
-        const payload = verifyAccessToken(token)
-        const admin = await Admin.findById(payload.id).select("-password")
-        if(!admin){
-            throw new ApiError(401, "Invalid Token, USER UNAVAILABLE")
-        }
-        req.admin = admin
-        next()
-    } catch (error) {
-        throw new ApiError(401, "Not Authorized")
+import jwt from "jsonwebtoken";
+import Admin from "../models/adminModel.js";
+
+export const protect = async (req, res, next) => {
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({ message: "Not authorized, no token" });
     }
-}
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.admin = await Admin.findById(decoded.id).select("-password");
+
+    next();
+  } catch (err) {
+    console.log("Protect Error:", err);
+    return res.status(401).json({ message: "Not authorized" });
+  }
+};
