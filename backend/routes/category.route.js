@@ -1,15 +1,20 @@
 import { Router } from "express";
-import {protect} from "../middlewares/auth.middleware.js";
+import { protect } from "../middlewares/auth.middleware.js";
 import {
   addCategory,
-  getCategory,
+  getCategories,
   deleteCategory,
 } from "../controllers/category.controller.js";
 
 const router = Router();
 
-router.route("/addCategory").post(protect, addCategory);
-router.route("/getCategory").get(getCategory);
-router.route("/deleteCategory/:id").delete(protect, deleteCategory);
+// Create a new category
+router.post("/", protect, addCategory);
+
+// Get all categories
+router.get("/", getCategories);
+
+// Delete a category by ID
+router.delete("/:id", protect, deleteCategory);
 
 export default router;
