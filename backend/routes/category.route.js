@@ -9,12 +9,12 @@ import {
 const router = Router();
 
 // Create a new category
-router.post("/", protect, addCategory);
+router.post("/addCategory", protect, addCategory);
 
 // Get all categories
-router.get("/", getCategory);
+router.get("/getCategory", getCategory);
 
 // Delete a category by ID
-router.delete("/:id", protect, deleteCategory);
+router.delete("/deleteCategory/:id", protect, deleteCategory);
 
 export default router;

@@ -3,11 +3,11 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Admin } from "../models/admin.model.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/token.js";
 
-// Cookies valid for 7 days
+// Cookie options for both local + production
 const cookieOptions = {
   httpOnly: true,
-  secure: true,          // Set true in production (HTTPS)
-  sameSite: "none",      // Required for cross-site cookies
+  secure: process.env.NODE_ENV === "production", // true only in production
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -29,8 +29,8 @@ export const registerAdmin = async (req, res) => {
       new ApiResponse(201, { id: admin._id, email: admin.email }, "Admin created successfully")
     );
   } catch (error) {
-    console.error("Register Admin Error:", error.message);
-    throw new ApiError(500, error.message || "Failed to register admin");
+    console.error("Register Admin Error:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -38,6 +38,7 @@ export const registerAdmin = async (req, res) => {
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const admin = await Admin.findOne({ email });
     if (!admin) throw new ApiError(401, "Invalid credentials");
 
@@ -47,9 +48,8 @@ export const loginAdmin = async (req, res) => {
     const accessToken = signAccessToken(admin);
     const refreshToken = signRefreshToken(admin);
 
-    // Prevent duplicate tokens
-    admin.refreshToken = admin.refreshToken.filter(rt => rt.token !== refreshToken);
-    admin.refreshToken.push({ token: refreshToken });
+    // Replace old refresh token with new one
+    admin.refreshToken = [{ token: refreshToken }];
     await admin.save();
 
     return res
@@ -58,13 +58,13 @@ export const loginAdmin = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, { id: admin._id, email: admin.email }, "Login successful"));
   } catch (error) {
-    console.error("Login Admin Error:", error.message);
-    throw new ApiError(500, error.message || "Login failed");
+    console.error("Login Error:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 
 // REFRESH TOKEN
-export const refreshToken = async (req, res) => {
+export const refreshAccessToken = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
     if (!token) throw new ApiError(401, "No refresh token found");
@@ -73,14 +73,14 @@ export const refreshToken = async (req, res) => {
     const admin = await Admin.findById(payload.id);
     if (!admin) throw new ApiError(401, "Invalid refresh token");
 
-    const exists = admin.refreshToken.find(rt => rt.token === token);
+    const exists = admin.refreshToken.some(rt => rt.token === token);
     if (!exists) throw new ApiError(401, "Refresh token not recognized");
 
-    // Remove old token and generate new tokens
-    admin.refreshToken = admin.refreshToken.filter(rt => rt.token !== token);
     const newAccessToken = signAccessToken(admin);
     const newRefreshToken = signRefreshToken(admin);
-    admin.refreshToken.push({ token: newRefreshToken });
+
+    // Rotate refresh token
+    admin.refreshToken = [{ token: newRefreshToken }];
     await admin.save();
 
     return res
@@ -89,8 +89,8 @@ export const refreshToken = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, {}, "Tokens refreshed successfully"));
   } catch (error) {
-    console.error("Refresh Token Error:", error.message);
-    throw new ApiError(401, error.message || "Token refresh failed");
+    console.error("Refresh Token Error:", error);
+    return res.status(401).json({ message: error.message });
   }
 };
 
@@ -98,6 +98,7 @@ export const refreshToken = async (req, res) => {
 export const logoutAdmin = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
+
     if (token) {
       const payload = verifyRefreshToken(token);
       await Admin.findByIdAndUpdate(payload.id, { $set: { refreshToken: [] } });
@@ -109,7 +110,7 @@ export const logoutAdmin = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, {}, "Logged out successfully"));
   } catch (error) {
-    console.error("Logout Admin Error:", error.message);
+    console.error("Logout Error:", error);
     return res
       .clearCookie("accessToken", cookieOptions)
       .clearCookie("refreshToken", cookieOptions)
