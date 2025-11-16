@@ -26,7 +26,7 @@ axiosInstance.interceptors.response.use(
     const status = error.response.status;
 
     const isRefreshEndpoint =
-      originalRequest?.url?.includes("/admin/refreshToken");
+      originalRequest?.url?.includes("/admin/refresh");
 
     // 🔥 DEBUG LOG
     console.log("❗ AXIOS 401 ERROR", {
