@@ -30,7 +30,7 @@ function Login() {
   // --------------------------
   // Maintenance Overlay Flag
   // --------------------------
-  const showMaintenance = true; // Set true to show maintenance screen
+  const showMaintenance = false; // Set true to show maintenance screen
 
   return (
     <div className="relative w-full h-screen">
