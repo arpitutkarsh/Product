@@ -2,17 +2,13 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: "https://backend-9lc5.onrender.com/api/ver1",
-  withCredentials: true, // important: sends cookies
+  withCredentials: true, // sends cookies
 });
 
 // Refresh control
 let isRefreshing = false;
 let failedQueue = [];
 
-/**
- * processQueue - resolves or rejects pending requests queued during refresh
- * @param {Error|null} error
- */
 const processQueue = (error = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
@@ -21,26 +17,31 @@ const processQueue = (error = null) => {
   failedQueue = [];
 };
 
-// Response interceptor: auto-refresh on 401
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If there's no response (network error), just reject
     if (!error.response) return Promise.reject(error);
-
     const status = error.response.status;
 
-    // If request was to refresh endpoint, don't try to refresh again
-    const isRefreshEndpoint = originalRequest && originalRequest.url && originalRequest.url.includes("/admin/refresh");
+    const isRefreshEndpoint =
+      originalRequest?.url?.includes("/admin/refreshToken");
 
-    // Only try once per request
+    // 🔥 DEBUG LOG
+    console.log("❗ AXIOS 401 ERROR", {
+      url: originalRequest.url,
+      status,
+      cookiesSent: document.cookie, // httpOnly cookies will NOT appear
+      serverMessage: error.response.data,
+    });
+
+    // Handle 401
     if (status === 401 && !originalRequest._retry && !isRefreshEndpoint) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Queue request while a refresh is in progress
+        // Queue pending requests
         return new Promise((resolve, reject) => {
           failedQueue.push({
             resolve: () => resolve(axiosInstance(originalRequest)),
@@ -52,22 +53,20 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint (cookie will be sent automatically)
-        await axiosInstance.post("/admin/refresh");
+        console.log("🔄 Attempting refresh… sending request to /admin/refreshToken");
 
-        // Resolve queued requests
+        const refreshRes = await axiosInstance.post("/admin/refreshToken");
+
+        console.log("🔐 Refresh success:", refreshRes.data);
+
         processQueue(null);
 
-        // Retry the original request
         return axiosInstance(originalRequest);
       } catch (err) {
-        // Reject queued requests
+        console.log("❌ Refresh failed:", err.response?.data);
+
         processQueue(err);
-
-        // Redirect to login page / root (frontend should clear session on route)
-        // You might prefer to use a global logout function here instead of direct location change.
         window.location.href = "/";
-
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
