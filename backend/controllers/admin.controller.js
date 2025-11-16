@@ -6,10 +6,11 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/
 // Cookie options for both local + production
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // true only in production
+  secure: process.env.NODE_ENV === "production", 
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
 
 // REGISTER ADMIN
 export const registerAdmin = async (req, res) => {
