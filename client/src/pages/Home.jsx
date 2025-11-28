@@ -31,27 +31,6 @@ const banners = [
 
 const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
-// Flipping timer component
-function FlipTimer({ value, label }) {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="flip-card relative w-16 h-20 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 text-white font-bold text-2xl flex items-center justify-center rounded-lg shadow-lg">
-        <motion.div
-          key={value}
-          initial={{ rotateX: 90, opacity: 0 }}
-          animate={{ rotateX: 0, opacity: 1 }}
-          exit={{ rotateX: -90, opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute w-full h-full flex items-center justify-center"
-        >
-          {value.toString().padStart(2, "0")}
-        </motion.div>
-      </div>
-      <span className="mt-2 text-sm font-semibold text-gray-700">{label}</span>
-    </div>
-  );
-}
-
 function Home() {
   const [products, setProducts] = useState([]);
   const [searchId, setSearchId] = useState("");
@@ -62,33 +41,8 @@ function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [visibleCount, setVisibleCount] = useState(8);
   const [recentSearches, setRecentSearches] = useState([]);
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   const navigate = useNavigate();
-  const launchDate = new Date("2025-11-29T15:00:00");
-
-  // Timer logic
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const diff = launchDate - now;
-
-      if (diff <= 0) {
-        clearInterval(timer);
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-
-      setTimeLeft({ days, hours, minutes, seconds });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   // Load recent searches
   useEffect(() => {
@@ -234,16 +188,31 @@ function Home() {
         </div>
       </div>
 
-      {/* Launch Timer */}
-      <div className="max-w-3xl mx-auto my-10 p-6 bg-white rounded-xl shadow-lg text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Website Launches In</h2>
-        <div className="flex justify-center gap-4">
-          <FlipTimer value={timeLeft.days} label="Days" />
-          <FlipTimer value={timeLeft.hours} label="Hours" />
-          <FlipTimer value={timeLeft.minutes} label="Minutes" />
-          <FlipTimer value={timeLeft.seconds} label="Seconds" />
-        </div>
-      </div>
+      {/* Slide-in Search Panel */}
+      <AnimatePresence>
+        {showSearch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.2 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-40"
+              onClick={() => setShowSearch(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
+              className="fixed top-0 right-0 w-80 h-full z-50 flex flex-col p-6 backdrop-blur-md bg-white/80 shadow-2xl overflow-y-auto rounded-l-xl hide-scrollbar"
+            >
+              {/* Search form & recent searches */}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
       {/* All Products with NEW badge */}
       {filteredProducts.length > 0 ? (
@@ -266,6 +235,7 @@ function Home() {
                   >
                     <ProductCard product={p} />
 
+                    {/* Subtle NEW badge */}
                     {isNew && (
                       <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full
                                       shadow-md animate-pulse">
