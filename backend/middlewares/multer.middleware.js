@@ -1,13 +1,21 @@
 import multer from "multer";
-const storage = multer.diskStorage({
-    destination: function(req, file, cb){
-        cb(null, "public/temp") //we are inserting the file in temp folder of the public folder that we have created
-    },
-    filename: function(req, file, cb){
-        cb(null, file.originalname)
-    }
-}) 
+import path from "path";
+import fs from "fs";
 
-export const upload = multer({
-    storage,
-})
+const tempDir = path.join(process.cwd(), "public", "temp");
+
+// Ensure temp directory exists
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, tempDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+export const upload = multer({ storage });

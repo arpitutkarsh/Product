@@ -3,8 +3,7 @@ import SideBar from "../Components/SideBar.jsx";
 import axiosInstance from "../utils/axiosInstance.js";
 
 const AddProduct = () => {
-  // 🔧 Enable / Disable Maintenance Mode
-  const maintenanceMode = true; // set to false when you want to enable the form
+  const maintenanceMode = false;
 
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -14,6 +13,7 @@ const AddProduct = () => {
     link: "",
     category: "",
   });
+
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,27 +23,31 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        console.log("📌 Fetching categories...");
         const res = await axiosInstance.get("/category/getCategory");
+        console.log("📌 Categories Response:", res.data);
         setCategories(res.data.data || []);
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("❌ Error fetching categories:", error);
         alert("Failed to load categories.");
       }
     };
     fetchCategories();
   }, []);
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
+    console.log(`📌 Input Change - ${e.target.name}: `, e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
+    console.log(`📌 Selected files for ${name}:`, files);
 
     if (name === "images") {
       if (files.length > 10) return alert("Max 10 images allowed");
       setImages([...files]);
     }
-
     if (name === "videos") {
       if (files.length > 10) return alert("Max 10 videos allowed");
       setVideos([...files]);
@@ -52,23 +56,23 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("📌 Form Data Before Submit:", formData);
+    console.log("📌 Images:", images);
+    console.log("📌 Videos:", videos);
 
-    if (
-      !formData.title ||
-      !formData.description ||
-      !formData.productId ||
-      !formData.link ||
-      !formData.category
-    ) {
+    if (!formData.title || !formData.description || !formData.productId || !formData.link || !formData.category) {
       return alert("Please fill in all required fields.");
     }
 
     const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) =>
-      data.append(key, value)
-    );
+    Object.entries(formData).forEach(([key, value]) => data.append(key, value));
     images.forEach((img) => data.append("images", img));
     videos.forEach((vid) => data.append("videos", vid));
+
+    console.log("📌 Final FormData entries:");
+    for (let pair of data.entries()) {
+      console.log(pair[0] + ": ", pair[1]);
+    }
 
     try {
       setLoading(true);
@@ -78,6 +82,7 @@ const AddProduct = () => {
       const res = await axiosInstance.post("/product/addProduct", data, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
+          console.log("📌 Upload Progress Event:", progressEvent);
           const total = progressEvent.total || 1;
           const percent = Math.round((progressEvent.loaded * 100) / total);
 
@@ -90,22 +95,18 @@ const AddProduct = () => {
         },
       });
 
+      console.log("✅ Product Added Response:", res.data);
+
       if (res.status === 201) {
-        alert("✅ Product added successfully!");
-        setFormData({
-          title: "",
-          description: "",
-          productId: "",
-          link: "",
-          category: "",
-        });
+        alert("Product added successfully!");
+        setFormData({ title: "", description: "", productId: "", link: "", category: "" });
         setImages([]);
         setVideos([]);
         setImageProgress(0);
         setVideoProgress(0);
       }
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error("❌ Error adding product:", error);
       alert(error.response?.data?.message || "Failed to add product");
     } finally {
       setLoading(false);
@@ -117,22 +118,11 @@ const AddProduct = () => {
     return (
       <div className="flex flex-wrap gap-4 mt-3">
         {files.map((file, index) => (
-          <div
-            key={index}
-            className="relative group border rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300"
-          >
+          <div key={index} className="relative group border rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300">
             {type === "image" ? (
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`preview-${index}`}
-                className="w-28 h-28 object-cover"
-              />
+              <img src={URL.createObjectURL(file)} alt={`preview-${index}`} className="w-28 h-28 object-cover" />
             ) : (
-              <video
-                src={URL.createObjectURL(file)}
-                controls
-                className="w-32 h-28 object-cover"
-              />
+              <video src={URL.createObjectURL(file)} controls className="w-32 h-28 object-cover" />
             )}
 
             <button
@@ -154,82 +144,22 @@ const AddProduct = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100">
       <SideBar />
-
-      {/* 🔧 Maintenance Mode UI */}
-      {maintenanceMode ? (
-        <div className="flex flex-1 justify-center items-center p-8">
-          <div className="bg-white rounded-3xl shadow-2xl p-10 border border-gray-200 text-center max-w-xl">
-            <h1 className="text-4xl font-bold text-purple-600 mb-4">
-              🔧 Under Maintenance
-            </h1>
-            <p className="text-gray-600 text-lg mb-6">
-              The Add Product page is currently under maintenance.
-              <br />
-              We’ll be back soon!
-            </p>
-            <div className="animate-spin mx-auto border-4 border-gray-300 border-t-purple-600 rounded-full h-12 w-12"></div>
-          </div>
-        </div>
-      ) : (
-        /* 👉 Normal Add Product Form */
+      {!maintenanceMode ? (
         <div className="flex flex-1 justify-center items-start p-8">
           <div className="w-full max-w-3xl">
-            <form
-              onSubmit={handleSubmit}
-              className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-200"
-            >
-              <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-                Add New Product
-              </h2>
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-200">
+              <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Add New Product</h2>
 
               <div className="space-y-4">
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Product Title"
-                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm"
-                  required
-                />
+                <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Product Title" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
 
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Product Description"
-                  rows="4"
-                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm"
-                  required
-                ></textarea>
+                <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Product Description" rows="4" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
 
-                <input
-                  type="text"
-                  name="productId"
-                  value={formData.productId}
-                  onChange={handleChange}
-                  placeholder="Product ID"
-                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm"
-                  required
-                />
+                <input type="text" name="productId" value={formData.productId} onChange={handleChange} placeholder="Product ID" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
 
-                <input
-                  type="text"
-                  name="link"
-                  value={formData.link}
-                  onChange={handleChange}
-                  placeholder="Product Link"
-                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm"
-                  required
-                />
+                <input type="text" name="link" value={formData.link} onChange={handleChange} placeholder="Product Link" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
 
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm"
-                  required
-                >
+                <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required>
                   <option value="">Select Category</option>
                   {categories.map((cat) => (
                     <option key={cat._id} value={cat._id}>
@@ -240,58 +170,26 @@ const AddProduct = () => {
 
                 <div>
                   <label className="block mb-2 font-medium">Upload Images</label>
-                  <input
-                    type="file"
-                    name="images"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-xl p-3"
-                  />
+                  <input type="file" name="images" accept="image/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
                   {renderPreviews(images, "image", setImages)}
-                  {loading && imageProgress > 0 && (
-                    <p className="text-sm text-gray-700 mt-1">
-                      Uploading Images: {imageProgress}%
-                    </p>
-                  )}
+                  {loading && imageProgress > 0 && <p className="text-sm text-gray-700 mt-1">Uploading Images: {imageProgress}%</p>}
                 </div>
 
                 <div>
-                  <label className="block mb-2 font-medium mt-4">
-                    Upload Videos
-                  </label>
-                  <input
-                    type="file"
-                    name="videos"
-                    accept="video/*"
-                    multiple
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-xl p-3"
-                  />
+                  <label className="block mb-2 font-medium mt-4">Upload Videos</label>
+                  <input type="file" name="videos" accept="video/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
                   {renderPreviews(videos, "video", setVideos)}
-                  {loading && videoProgress > 0 && (
-                    <p className="text-sm text-gray-700 mt-1">
-                      Uploading Videos: {videoProgress}%
-                    </p>
-                  )}
+                  {loading && videoProgress > 0 && <p className="text-sm text-gray-700 mt-1">Uploading Videos: {videoProgress}%</p>}
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className={`mt-8 w-full py-3 rounded-2xl text-white font-bold text-lg transition shadow-lg ${
-                  loading
-                    ? "bg-purple-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"
-                }`}
-              >
+              <button type="submit" disabled={loading} className={`mt-8 w-full py-3 rounded-2xl text-white font-bold text-lg transition shadow-lg ${loading ? "bg-purple-400 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"}`}>
                 {loading ? "Adding Product..." : "Add Product"}
               </button>
             </form>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
