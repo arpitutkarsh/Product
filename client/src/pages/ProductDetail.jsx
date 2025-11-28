@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance.js";
 import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, X, Play, Pause, Mic } from "lucide-react";
@@ -25,12 +24,16 @@ function ProductDetail() {
   const synthRef = useRef(null);
   const utterRef = useRef(null);
 
+  const API_BASE = "https://backend-9lc5.onrender.com/api/ver1/product";
+
+  // Fetch product from deployed backend
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axiosInstance.get(`/product/getAllProduct/${id}`);
-        const mergedMedia = [...(res.data.data.images || []), ...(res.data.data.videos || [])];
-        setProduct({ ...res.data.data, mergedMedia });
+        const res = await fetch(`${API_BASE}/id/${id}`);
+        const data = await res.json();
+        const mergedMedia = [...(data.data.images || []), ...(data.data.videos || [])];
+        setProduct({ ...data.data, mergedMedia });
       } catch (err) {
         console.error(err);
       } finally {
@@ -42,12 +45,14 @@ function ProductDetail() {
 
   const media = product?.mergedMedia || [];
 
+  // Auto-carousel for media
   useEffect(() => {
     if (!media.length || isHovered || isVideoPlaying) return;
     const t = setInterval(() => setCurrentIndex((p) => (p + 1) % media.length), 3500);
     return () => clearInterval(t);
   }, [media, isHovered, isVideoPlaying]);
 
+  // Handle video play/pause on carousel change
   useEffect(() => {
     const cur = media[currentIndex];
     if (!cur) return;
@@ -63,6 +68,7 @@ function ProductDetail() {
     }
   }, [currentIndex, media]);
 
+  // Voice synthesis setup
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
     const synth = synthRef.current;

@@ -7,17 +7,17 @@ import { QRCodeCanvas } from "qrcode.react";
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
 
+  // Include QR code as last media item
   const media = product.images?.length > 0 ? [...product.images, "QR_CODE"] : ["QR_CODE"];
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [loaded, setLoaded] = useState(false); // 🔹 loading state
+  const [loaded, setLoaded] = useState(false);
   const videoRef = useRef(null);
 
-  // Simulate content load delay
   useEffect(() => {
-    const timer = setTimeout(() => setLoaded(true), 1200); // 1.2s delay
+    const timer = setTimeout(() => setLoaded(true), 1200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -30,21 +30,18 @@ const ProductCard = ({ product }) => {
     return () => clearInterval(interval);
   }, [media.length, isHovered, isVideoPlaying]);
 
-  const nextSlide = (e) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % media.length);
-  };
-  const prevSlide = (e) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
-  };
+  const nextSlide = (e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % media.length); };
+  const prevSlide = (e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1)); };
   const handleVideoPlay = () => setIsVideoPlaying(true);
   const handleVideoPause = () => setIsVideoPlaying(false);
+
+  // Navigate to product detail page
+  const goToProductDetail = () => navigate(`/product/${product._id}`);
 
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
-      onClick={() => navigate(`/product/${product._id}`)}
+      onClick={goToProductDetail}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
@@ -68,9 +65,12 @@ const ProductCard = ({ product }) => {
               className="absolute inset-0 flex justify-center items-center"
             >
               {media[currentIndex] === "QR_CODE" ? (
-                <div className="flex flex-col items-center justify-center p-4 bg-white/30 backdrop-blur-xl rounded-xl shadow-lg border border-white/40">
+                <div
+                  onClick={(e) => { e.stopPropagation(); goToProductDetail(); }}
+                  className="flex flex-col items-center justify-center p-4 bg-white/30 backdrop-blur-xl rounded-xl shadow-lg border border-white/40 cursor-pointer"
+                >
                   <QRCodeCanvas
-                    value={`${window.location.origin}/product/${product._id}`}
+                    value={`/product/${product._id}`} // relative route for SPA navigation
                     size={120}
                     level="H"
                   />
@@ -105,7 +105,7 @@ const ProductCard = ({ product }) => {
           </div>
         )}
 
-        {/* Navigation Arrows - show only on hover */}
+        {/* Navigation Arrows */}
         {media.length > 1 && loaded && (
           <>
             <button
