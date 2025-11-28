@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/authContext.jsx";
-import { FaHome, FaPlus, FaThList, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaHome, FaPlus, FaThList, FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa"; // Added FaTimes
 import axiosInstance from "../utils/axiosInstance.js";
 
 const SideBar = () => {
@@ -35,6 +35,7 @@ const SideBar = () => {
 
   const handleTouchMove = (e) => {
     const moveY = e.touches[0].clientY;
+    // Close if swipe down is more than 70px
     if (moveY - startY > 70) setSidebarOpen(false);
   };
 
@@ -49,7 +50,8 @@ const SideBar = () => {
       {/* Mobile Floating Button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="sm:hidden fixed bottom-6 right-6 z-[99999] bg-blue-600 p-4 rounded-full shadow-lg text-white"
+        className="sm:hidden fixed bottom-6 right-6 z-[99999] bg-blue-600 p-4 rounded-full shadow-lg text-white transform transition-transform duration-300 hover:scale-105"
+        aria-label="Open menu"
       >
         <FaBars size={20} />
       </button>
@@ -59,44 +61,55 @@ const SideBar = () => {
         <div
           className="fixed inset-0 z-[99990] bg-black/50 backdrop-blur-sm sm:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         ></div>
       )}
 
-      {/* Mobile Bottom Sheet */}
+      {/* Mobile Bottom Sheet (Modified for better UX) */}
       <div
         className={`fixed w-full max-h-[85vh] left-0 z-[99999] bg-white rounded-t-2xl sm:hidden shadow-2xl overflow-y-auto transition-transform duration-500 ease-out
         ${sidebarOpen ? "translate-y-0" : "translate-y-full"}`}
         style={{ bottom: 0 }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Admin Menu"
       >
-        {/* Drag Handle */}
-        <div className="w-full flex justify-center py-3">
-          <div className="w-12 h-1.5 bg-gray-400 rounded-full"></div>
+        {/* Header with Drag Handle and Close Button */}
+        <div className="flex justify-between items-center px-6 py-3 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-blue-600">Admin Menu</h2>
+          {/* Drag Handle */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-1.5 w-12 h-1.5 bg-gray-300 rounded-full"></div>
+
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition"
+            aria-label="Close menu"
+          >
+            <FaTimes size={20} />
+          </button>
         </div>
 
         {/* Menu Items */}
-        <div className="flex flex-col p-6 space-y-4 pb-10">
-          <h2 className="text-xl font-bold text-blue-600 text-center pb-2">
-            Admin Menu
-          </h2>
-
+        <div className="flex flex-col p-4 space-y-3 pb-6">
           {menuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center p-3 rounded-lg font-medium text-lg transition ${isActive(
+              className={`flex items-center p-4 rounded-xl font-semibold text-lg transition shadow-sm ${isActive(
                 item.path
               )}`}
             >
-              <span className="mr-3">{item.icon}</span> {item.label}
+              <span className="mr-4">{item.icon}</span> {item.label}
             </Link>
           ))}
 
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center bg-red-500 text-white text-lg py-3 rounded-lg font-bold hover:bg-red-600 transition"
+            className="flex items-center justify-center bg-red-500 text-white text-lg py-4 mt-4 rounded-xl font-bold hover:bg-red-600 transition shadow-md"
           >
             <FaSignOutAlt className="mr-2" /> Logout
           </button>
