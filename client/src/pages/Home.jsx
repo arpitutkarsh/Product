@@ -217,7 +217,7 @@ function Home() {
       {/* All Products with NEW badge */}
       {filteredProducts.length > 0 ? (
         <>
-          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-12 mb-6 text-center">All Products</h3>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
