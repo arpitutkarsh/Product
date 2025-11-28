@@ -64,9 +64,9 @@ const SideBar = () => {
 
       {/* Mobile Bottom Sheet */}
       <div
-        className={`fixed w-full max-h-[85vh] left-0 z-[99999] bg-white rounded-t-2xl sm:hidden shadow-2xl overflow-y-auto transition-transform duration-500 ease-out
-        ${sidebarOpen ? "translate-y-0" : "translate-y-full"}`}
-        style={{ bottom: 0 }}
+        className={`fixed w-full sm:hidden z-[99999] bg-white rounded-t-2xl shadow-2xl overflow-y-auto transition-transform duration-500 ease-out
+        ${sidebarOpen ? "translate-y-0" : "translate-y-full"} flex flex-col`}
+        style={{ bottom: 0, maxHeight: "85vh" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
       >
@@ -76,27 +76,29 @@ const SideBar = () => {
         </div>
 
         {/* Menu Items */}
-        <div className="flex flex-col p-6 space-y-4 pb-10">
-          <h2 className="text-xl font-bold text-blue-600 text-center pb-2">
-            Admin Menu
-          </h2>
+        <div className="flex-1 flex flex-col justify-between p-6">
+          <div className="flex flex-col space-y-4">
+            <h2 className="text-xl font-bold text-blue-600 text-center pb-2 sticky top-0 bg-white z-10">
+              Admin Menu
+            </h2>
 
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center p-3 rounded-lg font-medium text-lg transition ${isActive(
-                item.path
-              )}`}
-            >
-              <span className="mr-3">{item.icon}</span> {item.label}
-            </Link>
-          ))}
+            {menuItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center p-3 rounded-lg font-medium text-lg transition ${isActive(
+                  item.path
+                )}`}
+              >
+                <span className="mr-3">{item.icon}</span> {item.label}
+              </Link>
+            ))}
+          </div>
 
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center bg-red-500 text-white text-lg py-3 rounded-lg font-bold hover:bg-red-600 transition"
+            className="flex items-center justify-center bg-red-500 text-white text-lg py-3 rounded-lg font-bold hover:bg-red-600 mt-6 transition"
           >
             <FaSignOutAlt className="mr-2" /> Logout
           </button>

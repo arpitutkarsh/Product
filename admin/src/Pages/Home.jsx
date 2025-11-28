@@ -43,21 +43,67 @@ const Home = () => {
 
   return (
     <div className="relative flex bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen overflow-hidden">
-      {/* Sidebar for desktop */}
-      <div className={`fixed left-0 top-0 h-screen z-20 overflow-y-auto scrollbar-hide
-        sm:block ${sidebarOpen ? "block" : "hidden"}`}>
-        <Sidebar />
+      {/* Sidebar for desktop + mobile */}
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+      {/* Main content */}
+      <div
+        className={`flex-1 flex flex-col z-10 overflow-hidden transition-all duration-300 ${
+          sidebarOpen ? "sm:ml-72" : "sm:ml-72"
+        } ml-0`}
+      >
+        {/* Navbar with hamburger */}
+        <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} sidebarOpen={sidebarOpen} />
+
+        <div className="p-4 sm:p-6 overflow-y-auto scrollbar-hide">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-3xl font-extrabold text-gray-800 tracking-wide">
+              All Products
+            </h2>
+            <label htmlFor="search" className="sr-only">
+              Search Products
+            </label>
+            <input
+              id="search"
+              type="text"
+              placeholder="Search product..."
+              className="border border-gray-300 p-3 rounded-lg w-full sm:w-60 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-300 shadow-sm hover:shadow-md"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Loading / No Products / Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-60 bg-gray-200 animate-pulse rounded-xl" />
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <p className="text-center text-gray-500 mt-10 text-lg">No products found.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <MemoizedProductCard
+                  key={product._id}
+                  product={product}
+                  onView={setSelectedProduct}
+                  className="transition transform hover:scale-105 hover:shadow-xl"
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Overlay for mobile when sidebar open */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-10 sm:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
+      {/* Product Modal */}
+      {selectedProduct && (
+        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       )}
 
-      {/* Decorative bubbles and stars */}
+      {/* Decorative Bubbles / Stars */}
       <div className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-none z-0">
         {Array.from({ length: 10 }).map((_, i) => (
           <div
@@ -86,66 +132,6 @@ const Home = () => {
           ></div>
         ))}
       </div>
-
-      {/* Main content */}
-      <div className={`flex-1 flex flex-col z-10 overflow-hidden transition-all duration-300
-        ${sidebarOpen ? "sm:ml-72" : "sm:ml-72"} ml-0`}>
-        {/* Navbar with hamburger */}
-        <Navbar
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-          sidebarOpen={sidebarOpen}
-        />
-
-        <div className="p-4 sm:p-6 overflow-y-auto scrollbar-hide">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-            <h2 className="text-3xl font-extrabold text-gray-800 tracking-wide">
-              All Products
-            </h2>
-            <label htmlFor="search" className="sr-only">Search Products</label>
-            <input
-              id="search"
-              type="text"
-              placeholder="Search product..."
-              className="border border-gray-300 p-3 rounded-lg w-full sm:w-60 focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-300 shadow-sm hover:shadow-md"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Loading / No Products / Grid */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-60 bg-gray-200 animate-pulse rounded-xl" />
-              ))}
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <p className="text-center text-gray-500 mt-10 text-lg">
-              No products found.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <MemoizedProductCard
-                  key={product._id}
-                  product={product}
-                  onView={setSelectedProduct}
-                  className="transition transform hover:scale-105 hover:shadow-xl"
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Product Modal */}
-      {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-        />
-      )}
 
       {/* Animations */}
       <style>{`
