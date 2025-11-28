@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, Suspense, lazy } from "react";
 import axios from "axios";
 import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Clock, ImageOff } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import exclusiveDeals from "../assets/exc.png";
 import trending from "../assets/trendingnow.jpg";
@@ -199,6 +199,7 @@ function Home() {
               className="fixed inset-0 bg-black z-40"
               onClick={() => setShowSearch(false)}
             />
+
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -206,7 +207,56 @@ function Home() {
               transition={{ type: "spring", stiffness: 120, damping: 15 }}
               className="fixed top-0 right-0 w-80 h-full z-50 flex flex-col p-6 backdrop-blur-md bg-white/80 shadow-2xl overflow-y-auto rounded-l-xl hide-scrollbar"
             >
-              {/* Search form & recent searches */}
+              {/* Search Form */}
+              <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
+                <input
+                  type="text"
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  placeholder="Search by Product ID..."
+                  className="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold text-gray-700">Recent Searches</h4>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-red-500 text-sm hover:underline"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <ul className="flex flex-col gap-2">
+                    {recentSearches.map((item) => (
+                      <li
+                        key={item.id}
+                        onClick={() => handleRecentSearchClick(item)}
+                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
+                      >
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-8 h-8 object-cover rounded"
+                          />
+                        )}
+                        <span className="text-gray-700">{item.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -235,10 +285,8 @@ function Home() {
                   >
                     <ProductCard product={p} />
 
-                    {/* Subtle NEW badge */}
                     {isNew && (
-                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full
-                                      shadow-md animate-pulse">
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
                       </div>
                     )}
