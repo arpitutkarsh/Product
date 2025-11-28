@@ -49,7 +49,7 @@ const SideBar = () => {
       {/* Mobile Floating Button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="sm:hidden fixed bottom-6 right-6 z-50 bg-blue-600 p-4 rounded-full shadow-lg text-white"
+        className="sm:hidden fixed bottom-6 right-6 z-[99999] bg-blue-600 p-4 rounded-full shadow-lg text-white"
       >
         <FaBars size={20} />
       </button>
@@ -57,30 +57,31 @@ const SideBar = () => {
       {/* Backdrop Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm sm:hidden"
+          className="fixed inset-0 z-[99990] bg-black/50 backdrop-blur-sm sm:hidden"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
       {/* Mobile Bottom Sheet */}
       <div
-        className={`fixed w-full left-0 z-50 bg-white rounded-t-2xl sm:hidden shadow-xl transition-transform duration-300 ${
-          sidebarOpen ? "translate-y-0" : "translate-y-full"
+        className={`fixed w-full left-0 z-[99999] bg-white rounded-t-2xl sm:hidden shadow-xl transition-transform duration-300 ${
+          sidebarOpen ? "translate-y-0" : "translate-y-[110%]"
         }`}
         style={{ bottom: 0 }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
       >
+        {/* Drag Handle */}
         <div className="w-full flex justify-center py-3">
           <div className="w-12 h-1.5 bg-gray-400 rounded-full"></div>
         </div>
 
-        <div className="flex flex-col p-6 space-y-4">
+        {/* Menu Items */}
+        <div className="flex flex-col p-6 space-y-4 pb-10">
           <h2 className="text-xl font-bold text-blue-600 text-center pb-2">
             Admin Menu
           </h2>
 
-          {/* Added All menu options for Mobile */}
           {menuItems.map((item) => (
             <Link
               key={item.path}
@@ -96,7 +97,7 @@ const SideBar = () => {
 
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center bg-red-500 text-white text-lg py-3 rounded-lg font-semibold hover:bg-red-600 transition"
+            className="flex items-center justify-center bg-red-500 text-white text-lg py-3 rounded-lg font-bold hover:bg-red-600 transition"
           >
             <FaSignOutAlt className="mr-2" /> Logout
           </button>
@@ -149,6 +150,28 @@ const SideBar = () => {
           </button>
         </div>
       </div>
+
+      {/* Animations */}
+      <style>{`
+        @keyframes diagonal {
+          0% { transform: translate(0,0); }
+          50% { transform: translate(20px,20px); }
+          100% { transform: translate(0,0); }
+        }
+        @keyframes diagonalReverse {
+          0% { transform: translate(0,0); }
+          50% { transform: translate(-20px,-20px); }
+          100% { transform: translate(0,0); }
+        }
+        .animate-diagonalSlow { animation: diagonal 8s infinite ease-in-out; }
+        .animate-diagonalSlowReverse { animation: diagonalReverse 8s infinite ease-in-out; }
+        @keyframes particle1 {0%{transform:translateY(0px);opacity:0.5}50%{transform:translateY(-8px);opacity:1}100%{transform:translateY(0px);opacity:0.5}}
+        @keyframes particle2 {0%{transform:translateX(0px);opacity:0.4}50%{transform:translateX(6px);opacity:0.9}100%{transform:translateX(0px);opacity:0.4}}
+        @keyframes particle3 {0%{transform:translate(0,0) rotate(0deg);opacity:0.5}50%{transform:translate(4px,-4px) rotate(180deg);opacity:1}100%{transform:translate(0,0) rotate(0deg);opacity:0.5}}
+        .animate-particle0 { animation: particle1 6s infinite ease-in-out; }
+        .animate-particle1 { animation: particle2 5s infinite ease-in-out; }
+        .animate-particle2 { animation: particle3 7s infinite ease-in-out; }
+      `}</style>
     </>
   );
 };
