@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
+import { useSwipeable } from "react-swipeable"; // ✅ added
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
 
-  // Include QR code as last media item
   const media = product.images?.length > 0 ? [...product.images, "QR_CODE"] : ["QR_CODE"];
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -21,7 +20,6 @@ const ProductCard = ({ product }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Auto-slide
   useEffect(() => {
     if (!media.length || isHovered || isVideoPlaying) return;
     const interval = setInterval(() => {
@@ -30,13 +28,19 @@ const ProductCard = ({ product }) => {
     return () => clearInterval(interval);
   }, [media.length, isHovered, isVideoPlaying]);
 
-  const nextSlide = (e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % media.length); };
-  const prevSlide = (e) => { e.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1)); };
+  const nextSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % media.length); };
+  const prevSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1)); };
   const handleVideoPlay = () => setIsVideoPlaying(true);
   const handleVideoPause = () => setIsVideoPlaying(false);
-
-  // Navigate to product detail page
   const goToProductDetail = () => navigate(`/product/${product._id}`);
+
+  // ✅ Swipe handlers
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => nextSlide(),
+    onSwipedRight: () => prevSlide(),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true, // allows dragging on desktop
+  });
 
   return (
     <motion.div
@@ -51,7 +55,10 @@ const ProductCard = ({ product }) => {
       className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-xl hover:shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col relative"
     >
       {/* Media Carousel */}
-      <div className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl">
+      <div
+        {...swipeHandlers} // ✅ apply swipe handlers
+        className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl"
+      >
         {!loaded ? (
           <div className="w-full h-full bg-gray-300 animate-pulse rounded-t-3xl" />
         ) : media.length > 0 ? (
@@ -70,7 +77,7 @@ const ProductCard = ({ product }) => {
                   className="flex flex-col items-center justify-center p-4 bg-white/30 backdrop-blur-xl rounded-xl shadow-lg border border-white/40 cursor-pointer"
                 >
                   <QRCodeCanvas
-                    value={`/product/${product._id}`} // relative route for SPA navigation
+                    value={`/product/${product._id}`}
                     size={120}
                     level="H"
                   />

@@ -17,6 +17,9 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
 
+  // Mobile stepper
+  const [step, setStep] = useState(0);
+
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -32,7 +35,6 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
       updateForm.append("description", formData.description);
       updateForm.append("category", formData.category);
       updateForm.append("link", formData.link);
-
       updateForm.append("deleteImages", JSON.stringify(imagesToDelete));
       updateForm.append("deleteVideos", JSON.stringify(videosToDelete));
 
@@ -69,150 +71,160 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 flex justify-center items-center z-50 p-4 backdrop-blur-sm bg-black/40">
-      <div className="w-full max-w-md md:max-w-lg bg-pink-200/20 backdrop-blur-xl border border-pink-300/30 rounded-3xl shadow-2xl p-6 overflow-y-auto max-h-[90vh] relative scrollbar-hide">
+  const renderPreviews = (files, type, setFiles) => {
+    if (!files.length) return null;
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {files.map((file, idx) => (
+          <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/30 hover:scale-105 transition-transform">
+            {type === "image" ? (
+              <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <video src={URL.createObjectURL(file)} controls className="w-full h-full object-cover" />
+            )}
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => setFiles(files.filter((_, i) => i !== idx))}
+              className="absolute top-1 right-1 bg-red-600 text-white w-5 h-5 flex items-center justify-center text-xs rounded-full"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-100 hover:text-white transition"
-          disabled={loading}
-        >
-          ✕
-        </button>
-
-        <h2 className="text-2xl font-bold mb-4 text-center text-white tracking-wide">
-          {loading ? "Updating Product..." : "Update Product"}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-white">
+  // Mobile steps
+  const steps = [
+    {
+      title: "Basic Info",
+      content: (
+        <>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            placeholder="Product Title"
-            className="border border-white/30 bg-white/10 backdrop-blur-sm p-3 rounded-lg placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none transition"
-            disabled={loading}
+            placeholder="Title"
+            className="w-full p-3 rounded-lg border border-white/30 mb-3"
           />
-
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Product Description"
-            className="border border-white/30 bg-white/10 backdrop-blur-sm p-3 rounded-lg placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none transition"
-            disabled={loading}
+            placeholder="Description"
+            rows={3}
+            className="w-full p-3 rounded-lg border border-white/30"
           />
-
+        </>
+      ),
+    },
+    {
+      title: "Category & Link",
+      content: (
+        <>
           <input
             type="text"
             name="link"
             value={formData.link}
             onChange={handleChange}
             placeholder="Product Link"
-            className="border border-white/30 bg-white/10 backdrop-blur-sm p-3 rounded-lg placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none transition"
-            disabled={loading}
+            className="w-full p-3 rounded-lg border border-white/30 mb-3"
           />
-
-          {/* Current Images */}
-          {product.images?.length > 0 && (
-            <div>
-              <p className="font-semibold mb-2 text-white">Current Images</p>
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img) => (
-                  <div
-                    key={img}
-                    className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/30 backdrop-blur-md hover:scale-105 hover:shadow-lg transition-transform"
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() =>
-                        setImagesToDelete((prev) =>
-                          prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
-                        )
-                      }
-                      className={`absolute top-1 right-1 text-xs px-2 py-1 rounded ${
-                        imagesToDelete.includes(img)
-                          ? "bg-red-600 text-white"
-                          : "bg-white/80 text-black border"
-                      }`}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* New Images */}
-          <label className="font-semibold mt-2 text-white">Add New Images</label>
+          <input
+            type="text"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            placeholder="Category ID"
+            className="w-full p-3 rounded-lg border border-white/30"
+          />
+        </>
+      ),
+    },
+    {
+      title: "Media",
+      content: (
+        <>
+          <label className="font-semibold mt-2">New Images</label>
           <input
             type="file"
             multiple
             accept="image/*"
             onChange={(e) => setNewImages([...e.target.files])}
-            className="border border-white/30 bg-white/10 backdrop-blur-sm p-2 rounded-lg"
-            disabled={loading}
+            className="w-full p-2 rounded-lg border border-white/30 mb-2"
           />
-          {loading && imageProgress > 0 && (
-            <div>
-              <p className="text-sm mb-1 text-white/80">Image Upload: {imageProgress}%</p>
-              <div className="w-full bg-white/20 rounded-full h-2">
-                <div
-                  className="bg-pink-400 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${imageProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
+          {renderPreviews(newImages, "image", setNewImages)}
 
-          {/* New Videos */}
-          <label className="font-semibold mt-4 text-white">Add New Videos</label>
+          <label className="font-semibold mt-4">New Videos</label>
           <input
             type="file"
             multiple
             accept="video/*"
             onChange={(e) => setNewVideos([...e.target.files])}
-            className="border border-white/30 bg-white/10 backdrop-blur-sm p-2 rounded-lg"
-            disabled={loading}
+            className="w-full p-2 rounded-lg border border-white/30 mb-2"
           />
-          {loading && videoProgress > 0 && (
-            <div>
-              <p className="text-sm mb-1 text-white/80">Video Upload: {videoProgress}%</p>
-              <div className="w-full bg-white/20 rounded-full h-2">
-                <div
-                  className="bg-pink-400 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${videoProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
+          {renderPreviews(newVideos, "video", setNewVideos)}
+        </>
+      ),
+    },
+  ];
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`mt-4 px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500"
-            }`}
-          >
-            {loading ? "Uploading..." : "Save Changes"}
+  return (
+    <>
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose}></div>
+
+      {/* Desktop modal */}
+      <div className="hidden sm:flex fixed inset-0 z-50 justify-center items-center p-4">
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-600 hover:text-black">
+            ✕
           </button>
-        </form>
+          <h2 className="text-2xl font-bold mb-4 text-center">Update Product</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Title" className="w-full p-3 rounded-lg border border-gray-300" />
+            <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" rows={3} className="w-full p-3 rounded-lg border border-gray-300" />
+            <input type="text" name="link" value={formData.link} onChange={handleChange} placeholder="Link" className="w-full p-3 rounded-lg border border-gray-300" />
+            <input type="text" name="category" value={formData.category} onChange={handleChange} placeholder="Category ID" className="w-full p-3 rounded-lg border border-gray-300" />
+            <button type="submit" disabled={loading} className="mt-4 py-2 bg-pink-500 rounded-lg text-white font-bold hover:bg-pink-600 transition">{loading ? "Updating..." : "Save Changes"}</button>
+          </form>
+        </div>
       </div>
 
-      {/* Hide scrollbar */}
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-    </div>
+      {/* Mobile slide-up modal */}
+      <div className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg rounded-t-3xl shadow-2xl p-4 transform transition-transform duration-500 ${step === 0 ? "translate-y-0" : "translate-y-0"}`}>
+        <h2 className="text-xl font-bold text-center mb-3">{steps[step].title}</h2>
+        {steps[step].content}
+        <div className="flex justify-between mt-4">
+          <button
+            disabled={step === 0}
+            onClick={() => setStep(step - 1)}
+            className="px-4 py-2 bg-gray-300 rounded-lg"
+          >
+            Back
+          </button>
+          {step < steps.length - 1 ? (
+            <button
+              onClick={() => setStep(step + 1)}
+              className="px-4 py-2 bg-pink-500 text-white rounded-lg"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`px-4 py-2 rounded-lg text-white ${loading ? "bg-gray-400" : "bg-gradient-to-r from-pink-500 to-pink-400"}`}
+            >
+              {loading ? "Uploading..." : "Submit"}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 };
 

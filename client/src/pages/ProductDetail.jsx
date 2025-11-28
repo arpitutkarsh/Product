@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, X, Play, Pause, Mic } from "lucide-react";
+import { useSwipeable } from "react-swipeable"; // ✅ added
 
 function ProductDetail() {
   const { id } = useParams();
@@ -26,7 +27,7 @@ function ProductDetail() {
 
   const API_BASE = "https://backend-9lc5.onrender.com/api/ver1/product";
 
-  // Fetch product from deployed backend
+  // Fetch product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -45,14 +46,14 @@ function ProductDetail() {
 
   const media = product?.mergedMedia || [];
 
-  // Auto-carousel for media
+  // Auto-carousel
   useEffect(() => {
     if (!media.length || isHovered || isVideoPlaying) return;
     const t = setInterval(() => setCurrentIndex((p) => (p + 1) % media.length), 3500);
     return () => clearInterval(t);
   }, [media, isHovered, isVideoPlaying]);
 
-  // Handle video play/pause on carousel change
+  // Video control
   useEffect(() => {
     const cur = media[currentIndex];
     if (!cur) return;
@@ -68,7 +69,7 @@ function ProductDetail() {
     }
   }, [currentIndex, media]);
 
-  // Voice synthesis setup
+  // Voice synthesis
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
     const synth = synthRef.current;
@@ -87,9 +88,11 @@ function ProductDetail() {
       utter.lang = voiceLang;
 
       const voices = synth.getVoices() || [];
-      const female = voices.find((v) => v.lang === voiceLang && /female/i.test(v.name)) ||
+      const female =
+        voices.find((v) => v.lang === voiceLang && /female/i.test(v.name)) ||
         voices.find((v) => v.lang === voiceLang) ||
-        voices.find((v) => /female/i.test(v.name)) || voices[0];
+        voices.find((v) => /female/i.test(v.name)) ||
+        voices[0];
 
       if (female) utter.voice = female;
 
@@ -130,6 +133,14 @@ function ProductDetail() {
   }, []);
 
   useEffect(() => stopSpeech, []);
+
+  // ✅ Swipe handlers for mobile
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => setCurrentIndex((p) => (p + 1) % media.length),
+    onSwipedRight: () => setCurrentIndex((p) => (p === 0 ? media.length - 1 : p - 1)),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true,
+  });
 
   if (loading) return <Loader />;
   if (!product) return <p className="text-center mt-10 text-gray-600">Product not found.</p>;
@@ -196,6 +207,7 @@ function ProductDetail() {
 
           {/* Media Carousel */}
           <div
+            {...swipeHandlers} // ✅ apply swipe for mobile
             className="relative w-full h-[260px] sm:h-[340px] md:h-[420px] bg-gray-100 flex justify-center items-center overflow-hidden rounded-t-2xl"
             onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
           >

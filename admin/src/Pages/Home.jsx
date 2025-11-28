@@ -1,4 +1,4 @@
-import React , { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "../Components/SideBar.jsx";
 import Navbar from "../Components/Navbar.jsx";
 import ProductCard from "../Components/ProductCard.jsx";
@@ -13,6 +13,7 @@ const Home = () => {
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Sidebar toggle for mobile
 
   // Fetch products
   useEffect(() => {
@@ -42,13 +43,22 @@ const Home = () => {
 
   return (
     <div className="relative flex bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen overflow-hidden">
-      {/* Sidebar fixed */}
-      <div className="fixed left-0 top-0 h-screen z-20 overflow-y-auto scrollbar-hide">
+      {/* Sidebar for desktop */}
+      <div className={`fixed left-0 top-0 h-screen z-20 overflow-y-auto scrollbar-hide
+        sm:block ${sidebarOpen ? "block" : "hidden"}`}>
         <Sidebar />
       </div>
 
+      {/* Overlay for mobile when sidebar open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-10 sm:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Decorative bubbles and stars */}
-      <div className="absolute top-0 left-72 right-0 bottom-0 overflow-hidden pointer-events-none z-0">
+      <div className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-none z-0">
         {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={i}
@@ -78,10 +88,15 @@ const Home = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col ml-72 z-10 overflow-hidden">
-        <Navbar />
+      <div className={`flex-1 flex flex-col z-10 overflow-hidden transition-all duration-300
+        ${sidebarOpen ? "sm:ml-72" : "sm:ml-72"} ml-0`}>
+        {/* Navbar with hamburger */}
+        <Navbar
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          sidebarOpen={sidebarOpen}
+        />
 
-        <div className="p-6 overflow-y-auto scrollbar-hide">
+        <div className="p-4 sm:p-6 overflow-y-auto scrollbar-hide">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
             <h2 className="text-3xl font-extrabold text-gray-800 tracking-wide">
@@ -102,10 +117,7 @@ const Home = () => {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-60 bg-gray-200 animate-pulse rounded-xl"
-                />
+                <div key={i} className="h-60 bg-gray-200 animate-pulse rounded-xl" />
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/authContext.jsx"; // Keep path as is
+import { motion } from "framer-motion";
 
 function Login() {
   const { login } = useAuth();
@@ -27,41 +28,48 @@ function Login() {
     }
   };
 
-  // --------------------------
   // Maintenance Overlay Flag
-  // --------------------------
   const showMaintenance = false; // Set true to show maintenance screen
 
   return (
     <div className="relative w-full h-screen">
-      {/* Original Login Page */}
-      <div className={`flex h-screen relative overflow-hidden ${showMaintenance ? "blur-sm pointer-events-none" : ""}`}>
+      <div
+        className={`flex h-screen relative overflow-hidden ${showMaintenance ? "blur-sm pointer-events-none" : ""} flex-col sm:flex-row`}
+      >
         {/* Left Side */}
-        <div className="flex-1 bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex flex-col justify-center items-start p-16 space-y-6 relative overflow-hidden">
+        <div className="hidden sm:flex flex-1 bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex-col justify-center items-start p-16 space-y-6 relative overflow-hidden">
           <h1 className="text-5xl font-bold z-10 relative">Admin Portal</h1>
           <p className="text-xl z-10 relative">Manage your products efficiently</p>
           <ul className="space-y-2 text-lg z-10 relative">
-            {["See Products", "Add Products", "Update Products", "Delete Products"].map((item, i) => (
-              <li key={i} className="flex items-center">
-                <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">✓</span>
-                {item}
-              </li>
-            ))}
+            {["See Products", "Add Products", "Update Products", "Delete Products"].map(
+              (item, i) => (
+                <li key={i} className="flex items-center">
+                  <span className="bg-white text-blue-600 font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3">
+                    ✓
+                  </span>
+                  {item}
+                </li>
+              )
+            )}
           </ul>
           <div className="absolute w-36 h-36 bg-pink-400 rounded-full opacity-30 top-[-50px] left-[-50px] animate-pulseSlow"></div>
           <div className="absolute w-48 h-48 bg-pink-300 rounded-full opacity-20 bottom-[-80px] right-[-60px] animate-pulseSlow"></div>
           <div className="absolute w-24 h-24 bg-pink-500 rounded-full opacity-25 top-[150px] right-[50px] animate-pulseSlow"></div>
         </div>
 
-        {/* Right Side */}
-        <div className="flex-1 flex justify-center items-center bg-gray-100 relative overflow-hidden">
+        {/* Right Side / Form */}
+        <div className="flex-1 flex justify-center items-end sm:items-center bg-gray-100 relative overflow-hidden p-6 sm:p-0">
           <div className="absolute w-32 h-32 bg-pink-400 rounded-full opacity-20 top-[-40px] right-[30px] animate-pulseSlow"></div>
           <div className="absolute w-48 h-48 bg-pink-300 rounded-full opacity-15 bottom-[20px] left-[50px] animate-pulseSlow"></div>
           <div className="absolute w-24 h-24 bg-pink-500 rounded-full opacity-25 top-[100px] left-[20px] animate-pulseSlow"></div>
 
-          <form
+          {/* Slide-up on mobile */}
+          <motion.form
             onSubmit={handleSubmit}
-            className="relative z-10 bg-white/20 backdrop-blur-xl p-10 rounded-2xl shadow-2xl w-96 flex flex-col space-y-5"
+            className="relative z-10 bg-white/20 backdrop-blur-xl p-8 sm:p-10 rounded-2xl shadow-2xl w-full max-w-md flex flex-col space-y-5"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20 }}
           >
             <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
               Admin Login
@@ -104,7 +112,7 @@ function Login() {
             >
               Register as Admin
             </button>
-          </form>
+          </motion.form>
         </div>
 
         <style>{`
@@ -118,12 +126,9 @@ function Login() {
         `}</style>
       </div>
 
-      {/* --------------------------
-          Maintenance Overlay
-      -------------------------- */}
+      {/* Maintenance Overlay */}
       {showMaintenance && (
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-gray-900 via-black to-gray-900 flex flex-col items-center justify-center z-50">
-          {/* Stars */}
           <div className="absolute top-0 left-0 w-full h-full">
             {Array.from({ length: 120 }).map((_, i) => (
               <div
