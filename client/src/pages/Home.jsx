@@ -155,6 +155,12 @@ function Home() {
     localStorage.removeItem("recentSearches");
   };
 
+  const removeSingleRecent = (id) => {
+    const updated = recentSearches.filter(item => item.id !== id);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
+
   const clearSearch = (e) => {
     e.stopPropagation();
     setSearchId("");
@@ -199,7 +205,6 @@ function Home() {
               className="fixed inset-0 bg-black z-40"
               onClick={() => setShowSearch(false)}
             />
-
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -234,24 +239,35 @@ function Home() {
                       onClick={clearRecentSearches}
                       className="text-red-500 text-sm hover:underline"
                     >
-                      Clear
+                      Clear All
                     </button>
                   </div>
                   <ul className="flex flex-col gap-2">
                     {recentSearches.map((item) => (
                       <li
                         key={item.id}
-                        onClick={() => handleRecentSearchClick(item)}
-                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
                       >
-                        {item.image && (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-8 h-8 object-cover rounded"
-                          />
-                        )}
-                        <span className="text-gray-700">{item.name}</span>
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={() => handleRecentSearchClick(item)}
+                        >
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          )}
+                          <span className="text-gray-700">{item.name}</span>
+                        </div>
+                        <button
+                          onClick={() => removeSingleRecent(item.id)}
+                          className="text-red-500 hover:text-red-700"
+                          title="Remove"
+                        >
+                          <X size={16} />
+                        </button>
                       </li>
                     ))}
                   </ul>
