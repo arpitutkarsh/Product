@@ -35,7 +35,7 @@ const SideBar = () => {
 
   const handleTouchMove = (e) => {
     const moveY = e.touches[0].clientY;
-    if (moveY - startY > 70) setSidebarOpen(false); // swipe-down to close
+    if (moveY - startY > 70) setSidebarOpen(false);
   };
 
   const menuItems = [
@@ -71,7 +71,6 @@ const SideBar = () => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
       >
-        {/* Drag Handle */}
         <div className="w-full flex justify-center py-3">
           <div className="w-12 h-1.5 bg-gray-400 rounded-full"></div>
         </div>
@@ -81,6 +80,7 @@ const SideBar = () => {
             Admin Menu
           </h2>
 
+          {/* Added All menu options for Mobile */}
           {menuItems.map((item) => (
             <Link
               key={item.path}
@@ -105,13 +105,10 @@ const SideBar = () => {
 
       {/* Desktop Sidebar (UNCHANGED) */}
       <div className="hidden sm:flex fixed top-0 left-0 w-72 h-screen bg-white border-r shadow-lg p-6 flex-col justify-between overflow-hidden">
-        {/* Animated floating background */}
+        {/* Animated Floating Background */}
         <div className="absolute w-36 h-36 bg-pink-400 rounded-full opacity-30 top-[-50px] left-[-50px] animate-diagonalSlow"></div>
         <div className="absolute w-48 h-48 bg-pink-300 rounded-full opacity-20 bottom-[-80px] right-[-60px] animate-diagonalSlowReverse"></div>
         <div className="absolute w-24 h-24 bg-pink-500 rounded-full opacity-25 top-[150px] right-[50px] animate-diagonalSlow"></div>
-
-        <div className="absolute w-2 h-2 bg-yellow-400 rounded-full top-[40px] left-[60px] animate-twinkleDiagonal"></div>
-        <div className="absolute w-1.5 h-1.5 bg-yellow-300 rounded-full top-[120px] right-[100px] animate-twinkleDiagonalReverse"></div>
 
         {Array.from({ length: 15 }).map((_, i) => (
           <div
@@ -124,7 +121,6 @@ const SideBar = () => {
           />
         ))}
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
             <h2 className="text-2xl font-extrabold text-blue-600 mb-10 tracking-wide text-center">
@@ -153,34 +149,6 @@ const SideBar = () => {
           </button>
         </div>
       </div>
-
-      {/* Animations */}
-      <style>{`
-        @keyframes diagonal {
-          0% { transform: translate(0,0); }
-          50% { transform: translate(20px,20px); }
-          100% { transform: translate(0,0); }
-        }
-        @keyframes diagonalReverse {
-          0% { transform: translate(0,0); }
-          50% { transform: translate(-20px,-20px); }
-          100% { transform: translate(0,0); }
-        }
-        .animate-diagonalSlow { animation: diagonal 8s infinite ease-in-out; }
-        .animate-diagonalSlowReverse { animation: diagonalReverse 8s infinite ease-in-out; }
-        @keyframes twinkle {
-          0%,100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.3); }
-        }
-        .animate-twinkleDiagonal { animation: twinkle 4s infinite; }
-        .animate-twinkleDiagonalReverse { animation: twinkle 5s infinite; }
-        @keyframes particle1 {0%{transform:translateY(0px);opacity:0.5}50%{transform:translateY(-8px);opacity:1}100%{transform:translateY(0px);opacity:0.5}}
-        @keyframes particle2 {0%{transform:translateX(0px);opacity:0.4}50%{transform:translateX(6px);opacity:0.9}100%{transform:translateX(0px);opacity:0.4}}
-        @keyframes particle3 {0%{transform:translate(0,0) rotate(0deg);opacity:0.5}50%{transform:translate(4px,-4px) rotate(180deg);opacity:1}100%{transform:translate(0,0) rotate(0deg);opacity:0.5}}
-        .animate-particle0 { animation: particle1 6s infinite ease-in-out; }
-        .animate-particle1 { animation: particle2 5s infinite ease-in-out; }
-        .animate-particle2 { animation: particle3 7s infinite ease-in-out; }
-      `}</style>
     </>
   );
 };
