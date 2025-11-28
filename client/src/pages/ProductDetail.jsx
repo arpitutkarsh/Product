@@ -1,269 +1,329 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo, Suspense, lazy } from "react";
+import axios from "axios";
 import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink, X, Play, Pause, Mic } from "lucide-react";
+import { Search, X, Clock, ImageOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import exclusiveDeals from "../assets/exc.png";
+import trending from "../assets/trendingnow.jpg";
+const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
 
-function ProductDetail() {
-  const { id } = useParams();
+const banners = [
+  {
+    src: "/banners/banner1.jpg",
+    title: "Welcome to Smart Buy",
+    subtitle: "Curated luxury at your fingertips",
+    gradient: "from-purple-600/60 via-pink-400/40 to-yellow-300/30",
+  },
+  {
+    src: exclusiveDeals,
+    title: "Exclusive Deals",
+    subtitle: "Unveil premium discounts today",
+    gradient: "from-green-400/50 via-blue-500/30 to-indigo-500/50",
+  },
+  {
+    src: trending,
+    title: "Trending Now",
+    subtitle: "Discover what’s loved this week",
+    gradient: "from-red-400/50 via-orange-300/30 to-yellow-200/40",
+  },
+];
+
+const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
+
+function Home() {
+  const [products, setProducts] = useState([]);
+  const [searchId, setSearchId] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(8);
+  const [recentSearches, setRecentSearches] = useState([]);
+
   const navigate = useNavigate();
 
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const videoRef = useRef(null);
-
-  const [showVoicePanel, setShowVoicePanel] = useState(false);
-  const [voiceLang, setVoiceLang] = useState("en-IN");
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const wasSpeakingBeforeHide = useRef(false);
-  const synthRef = useRef(null);
-  const utterRef = useRef(null);
-
-  const API_BASE = "https://backend-9lc5.onrender.com/api/ver1/product";
-
-  // Fetch product from deployed backend
+  // Load recent searches
   useEffect(() => {
-    const fetchProduct = async () => {
+    const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
+    setRecentSearches(stored);
+  }, []);
+
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
       try {
-        const res = await fetch(`${API_BASE}/id/${id}`);
-        const data = await res.json();
-        const mergedMedia = [...(data.data.images || []), ...(data.data.videos || [])];
-        setProduct({ ...data.data, mergedMedia });
+        const res = await axios.get(`${BASE_URL}/getAllProduct`);
+        setProducts(res.data.data || []);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchProduct();
-  }, [id]);
-
-  const media = product?.mergedMedia || [];
-
-  // Auto-carousel for media
-  useEffect(() => {
-    if (!media.length || isHovered || isVideoPlaying) return;
-    const t = setInterval(() => setCurrentIndex((p) => (p + 1) % media.length), 3500);
-    return () => clearInterval(t);
-  }, [media, isHovered, isVideoPlaying]);
-
-  // Handle video play/pause on carousel change
-  useEffect(() => {
-    const cur = media[currentIndex];
-    if (!cur) return;
-    if (cur.endsWith(".mp4")) {
-      const v = videoRef.current;
-      if (v) setTimeout(() => v.play().catch(() => {}), 250);
-    } else {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
-      setIsVideoPlaying(false);
-    }
-  }, [currentIndex, media]);
-
-  // Voice synthesis setup
-  useEffect(() => {
-    synthRef.current = window.speechSynthesis;
-    const synth = synthRef.current;
-    const ensureVoices = () => {};
-    window.addEventListener("voiceschanged", ensureVoices);
-    return () => window.removeEventListener("voiceschanged", ensureVoices);
+    fetchProducts();
   }, []);
 
-  const togglePlayPause = () => {
-    if (!product?.description) return;
-    const synth = synthRef.current;
+  // Infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+        setVisibleCount(prev => prev + 8);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    if (!isSpeaking && !isPaused) {
-      synth.cancel();
-      const utter = new SpeechSynthesisUtterance(product.description);
-      utter.lang = voiceLang;
+  const filteredProducts = useMemo(() => {
+    if (!searchId.trim()) return products;
+    return products.filter(p =>
+      p.productId?.toLowerCase().includes(searchId.trim().toLowerCase())
+    );
+  }, [products, searchId]);
 
-      const voices = synth.getVoices() || [];
-      const female = voices.find((v) => v.lang === voiceLang && /female/i.test(v.name)) ||
-        voices.find((v) => v.lang === voiceLang) ||
-        voices.find((v) => /female/i.test(v.name)) || voices[0];
+  const recentProducts = useMemo(() => {
+    const now = Date.now();
+    return products.filter(p =>
+      p.createdAt && now - new Date(p.createdAt).getTime() <= 24 * 60 * 60 * 1000
+    );
+  }, [products]);
 
-      if (female) utter.voice = female;
+  const saveRecentSearch = (id) => {
+    const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
+    if (!product) return;
 
-      utter.onstart = () => { setIsSpeaking(true); setIsPaused(false); wasSpeakingBeforeHide.current = true; };
-      utter.onend = () => { setIsSpeaking(false); setIsPaused(false); utterRef.current = null; wasSpeakingBeforeHide.current = false; };
-      utter.onpause = () => setIsPaused(true);
-      utter.onresume = () => setIsPaused(false);
+    const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
+    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)];
+    updated = updated.slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
 
-      utterRef.current = utter;
-      synth.speak(utter);
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!searchId.trim()) {
+      setSearchActive(false);
+      setShowSearch(false);
       return;
     }
 
-    if (isSpeaking && !isPaused) { synth.pause(); setIsPaused(true); return; }
-    if (isSpeaking && isPaused) { synth.resume(); setIsPaused(false); return; }
-  };
-
-  const stopSpeech = () => {
-    const synth = synthRef.current;
-    if (synth) synth.cancel();
-    setIsSpeaking(false); setIsPaused(false); utterRef.current = null; wasSpeakingBeforeHide.current = false;
-  };
-
-  useEffect(() => {
-    const onVisibility = () => {
-      const synth = synthRef.current;
-      if (document.visibilityState === "hidden") {
-        if (synth?.speaking && !synth.paused) wasSpeakingBeforeHide.current = true;
-      } else {
-        if (wasSpeakingBeforeHide.current && synth?.paused) {
-          try { synth.resume(); setIsPaused(false); setIsSpeaking(true); } catch {}
-        }
-        wasSpeakingBeforeHide.current = false;
+    try {
+      const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
+      if (!res.data.data) {
+        setError("Product does not exist.");
+        setSearchActive(true);
+        setShowSearch(false);
+        return;
       }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
+      saveRecentSearch(res.data.data.productId);
+      setSearchActive(true);
+      setShowSearch(false);
+    } catch (err) {
+      setError("Product does not exist.");
+      setSearchActive(true);
+      setShowSearch(false);
+    }
+  };
 
-  useEffect(() => stopSpeech, []);
+  const handleRecentSearchClick = async (item) => {
+    setSearchId(item.id);
+    try {
+      const res = await axios.get(`${BASE_URL}/product/${item.id}`);
+      if (!res.data.data) {
+        setError("Product does not exist.");
+        setSearchActive(true);
+        setShowSearch(false);
+        return;
+      }
+      saveRecentSearch(item.id);
+      setError("");
+      setSearchActive(true);
+      setShowSearch(false);
+    } catch (err) {
+      setError("Product does not exist.");
+      setSearchActive(true);
+      setShowSearch(false);
+    }
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem("recentSearches");
+  };
+
+  const clearSearch = (e) => {
+    e.stopPropagation();
+    setSearchId("");
+    setSearchActive(false);
+    setError("");
+  };
 
   if (loading) return <Loader />;
-  if (!product) return <p className="text-center mt-10 text-gray-600">Product not found.</p>;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-3 md:px-6"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={() => { stopSpeech(); navigate(-1); }}
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 140, damping: 18 }}
-          className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto hide-scrollbar"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Top Controls */}
-          <div className="absolute top-4 right-4 flex items-center gap-3 z-50">
-            <button onClick={() => setShowVoicePanel((s) => { if (s) stopSpeech(); return !s; })}
-              className="bg-white p-2 rounded-full shadow hover:bg-gray-100 transition">
-              <Mic size={18} className="text-gray-700"/>
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+      {/* Floating Search */}
+      <div className="fixed top-10 right-6 z-50">
+        <div className="relative">
+          <button
+            onClick={() => setShowSearch(true)}
+            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 rounded-full shadow-xl hover:scale-110 transition transform"
+            title="Search Product"
+          >
+            <Search size={22} />
+          </button>
+          {searchActive && (
+            <button
+              onClick={clearSearch}
+              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition"
+              title="Clear Search"
+            >
+              <X size={12} />
             </button>
-            <button onClick={() => { stopSpeech(); navigate(-1); }}
-              className="bg-white p-2 rounded-full shadow hover:bg-gray-100 transition">
-              <X size={18} className="text-gray-700"/>
-            </button>
-          </div>
+          )}
+        </div>
+      </div>
 
-          {/* Voice Panel */}
-          <AnimatePresence>
-            {showVoicePanel && (
-              <motion.div
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -10, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed top-5 left-1/2 -translate-x-1/2 bg-white p-3 rounded-xl shadow-lg z-[999] flex items-center gap-3"
-              >
-                <select value={voiceLang} onChange={(e) => setVoiceLang(e.target.value)}
-                  className="text-sm px-2 py-1 border rounded">
-                  <option value="en-IN">Male</option>
-                  <option value="hi-IN">Female</option>
-                </select>
-                <button onClick={togglePlayPause} className="bg-blue-600 p-2 rounded-full text-white shadow hover:bg-blue-700">
-                  {isSpeaking && !isPaused ? <Pause size={16}/> : <Play size={16}/>}
+      {/* Slide-in Search Panel */}
+      <AnimatePresence>
+        {showSearch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.2 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-40"
+              onClick={() => setShowSearch(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
+              className="fixed top-0 right-0 w-80 h-full z-50 flex flex-col p-6 backdrop-blur-md bg-white/80 shadow-2xl overflow-y-auto rounded-l-xl hide-scrollbar"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-700">Search Product</h2>
+                <button onClick={() => setShowSearch(false)} className="text-gray-500 hover:text-gray-700">
+                  <X size={22} />
                 </button>
-                <div className="flex items-end gap-1 w-28 h-6" aria-hidden>
-                  {Array.from({length:6}).map((_, i) => (
-                    <span key={i} className="block bg-blue-400 rounded-sm transition-all origin-bottom"
-                      style={{
-                        width: 4,
-                        height: isSpeaking && !isPaused ? `${8 + (i%4)*6}px` : "6px",
-                        animation: isSpeaking && !isPaused ? `wave 900ms ${i*80}ms infinite ease-in-out` : "none"
-                      }}
-                    />
+              </div>
+
+              <form onSubmit={handleSearch} className="flex flex-col space-y-3">
+                <input
+                  type="text"
+                  placeholder="Enter Product ID"
+                  className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-700 shadow-inner"
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-400 text-white px-4 py-2 rounded-lg hover:scale-105 shadow-md transition"
+                >
+                  Search
+                </button>
+              </form>
+
+              {recentSearches.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-md font-semibold text-gray-700 flex items-center gap-1">
+                      <Clock size={18} /> Recent Searches
+                    </h3>
+                    <button className="text-red-500 text-sm" onClick={clearRecentSearches}>
+                      Clear
+                    </button>
+                  </div>
+
+                  {recentSearches.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2 border rounded-lg mb-2 cursor-pointer hover:bg-purple-50 transition"
+                      onClick={() => handleRecentSearchClick(s)}
+                    >
+                      {s.image ? (
+                        <img
+                          src={s.image}
+                          alt={s.name}
+                          className="w-12 h-12 object-cover rounded-lg shadow-md"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 flex flex-col items-center justify-center bg-gray-200 text-gray-500 rounded-lg shadow-md text-xs font-medium">
+                          <ImageOff size={16} className="mb-1" />
+                          No Image
+                        </div>
+                      )}
+                      <p className="font-medium text-gray-800">{s.name}</p>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-          {/* Media Carousel */}
-          <div
-            className="relative w-full h-[260px] sm:h-[340px] md:h-[420px] bg-gray-100 flex justify-center items-center overflow-hidden rounded-t-2xl"
-            onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
-          >
-            {media.length ? (
-              <>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentIndex}
-                    initial={{ opacity:0, scale:0.97 }}
-                    animate={{ opacity:1, scale:1 }}
-                    exit={{ opacity:0 }}
-                    transition={{ duration:0.35 }}
-                    className="absolute inset-0 flex justify-center items-center"
-                  >
-                    {media[currentIndex].endsWith(".mp4") ? (
-                      <video
-                        ref={videoRef} src={media[currentIndex]} muted autoPlay loop playsInline controls
-                        className="w-full h-full object-cover rounded-t-2xl"
-                        onPlay={() => setIsVideoPlaying(true)}
-                        onPause={() => setIsVideoPlaying(false)}
-                      />
-                    ) : (
-                      <img src={media[currentIndex]} alt={product.title} className="w-full h-full object-contain"/>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
+      {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
-                {media.length>1 && (
-                  <>
-                    <button onClick={() => setCurrentIndex(p=>p===0?media.length-1:p-1)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md hover:bg-white"><ChevronLeft size={20}/></button>
-                    <button onClick={() => setCurrentIndex(p=>(p+1)%media.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md hover:bg-white"><ChevronRight size={20}/></button>
-                  </>
-                )}
-              </>
-            ) : <p className="text-gray-500">No media found.</p>}
+      {/* All Products Section */}
+      {filteredProducts.length > 0 ? (
+        <>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-12 mb-6 text-center">All Products</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+            <Suspense fallback={<Loader />}>
+              {filteredProducts.slice(0, visibleCount).map((p, i) => (
+                <motion.div
+                  key={p._id}
+                  whileHover={{ scale: 1.03 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/product/${p._id}`)}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
+            </Suspense>
           </div>
+        </>
+      ) : (
+        !error && <p className="text-center mt-50 text-gray-600">No products found.</p>
+      )}
 
-          {/* Product Info */}
-          <div className="p-6 sm:p-8 text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{product.title}</h1>
-            <div className="flex flex-wrap justify-center gap-3 mt-3 text-sm text-gray-500">
-              <span className="bg-gray-100 px-3 py-1 rounded-full font-mono">ID: {product.productId}</span>
-              <span className="bg-gray-100 px-3 py-1 rounded-full">{product.category?.name}</span>
-            </div>
-            <p className="max-w-2xl mx-auto text-gray-700 leading-relaxed mt-4 text-sm sm:text-base">{product.description}</p>
-            {product.link && (
-              <a href={product.link} target="_blank" rel="noreferrer"
-                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg mt-4 hover:bg-blue-700 transition">
-                <ExternalLink size={16}/> View Product
-              </a>
-            )}
+      {/* Recently Added Products Section */}
+      {recentProducts.length > 0 && (
+        <div className="mb-12 mt-12">
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Recently Added Products</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+            <Suspense fallback={<Loader />}>
+              {recentProducts.slice(0, visibleCount).map((p, i) => (
+                <motion.div
+                  key={p._id}
+                  whileHover={{ scale: 1.05 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/product/${p._id}`)}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
+            </Suspense>
           </div>
+        </div>
+      )}
 
-          <style>{`
-            @keyframes wave {
-              0% { transform: scaleY(0.4); opacity:0.6; }
-              50% { transform: scaleY(1); opacity:1; }
-              100% { transform: scaleY(0.4); opacity:0.6; }
-            }
-            .hide-scrollbar::-webkit-scrollbar { display:none; }
-            .hide-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
-          `}</style>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </div>
   );
 }
 
-export default ProductDetail;
+export default Home;
