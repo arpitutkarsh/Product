@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance.js";
 
 const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
@@ -9,6 +9,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
     link: product.link || "",
   });
 
+  const [categories, setCategories] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [newVideos, setNewVideos] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
@@ -16,9 +17,21 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
-
-  // Mobile stepper
   const [step, setStep] = useState(0);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axiosInstance.get("/category/getCategory");
+        setCategories(res.data.data || []);
+      } catch (err) {
+        console.error("Failed to load categories", err);
+        alert("Failed to fetch categories");
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,7 +59,6 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
         onUploadProgress: (progressEvent) => {
           const total = progressEvent.total || 1;
           const percent = Math.round((progressEvent.loaded * 100) / total);
-
           if (newImages.length && !newVideos.length) setImageProgress(percent);
           else if (newVideos.length && !newImages.length) setVideoProgress(percent);
           else {
@@ -133,14 +145,19 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
             placeholder="Product Link"
             className="w-full p-3 rounded-lg border border-white/30 mb-3"
           />
-          <input
-            type="text"
+          <select
             name="category"
             value={formData.category}
             onChange={handleChange}
-            placeholder="Category ID"
             className="w-full p-3 rounded-lg border border-white/30"
-          />
+          >
+            <option value="">Select Category</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
         </>
       ),
     },
@@ -179,7 +196,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
 
       {/* Desktop modal */}
       <div className="hidden sm:flex fixed inset-0 z-50 justify-center items-center p-4">
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] relative">
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-600 hover:text-black">
             ✕
           </button>
@@ -188,14 +205,23 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
             <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Title" className="w-full p-3 rounded-lg border border-gray-300" />
             <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" rows={3} className="w-full p-3 rounded-lg border border-gray-300" />
             <input type="text" name="link" value={formData.link} onChange={handleChange} placeholder="Link" className="w-full p-3 rounded-lg border border-gray-300" />
-            <input type="text" name="category" value={formData.category} onChange={handleChange} placeholder="Category ID" className="w-full p-3 rounded-lg border border-gray-300" />
-            <button type="submit" disabled={loading} className="mt-4 py-2 bg-pink-500 rounded-lg text-white font-bold hover:bg-pink-600 transition">{loading ? "Updating..." : "Save Changes"}</button>
+            <select name="category" value={formData.category} onChange={handleChange} className="w-full p-3 rounded-lg border border-gray-300">
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <button type="submit" disabled={loading} className="mt-4 py-2 bg-pink-500 rounded-lg text-white font-bold hover:bg-pink-600 transition">
+              {loading ? "Updating..." : "Save Changes"}
+            </button>
           </form>
         </div>
       </div>
 
       {/* Mobile slide-up modal */}
-      <div className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg rounded-t-3xl shadow-2xl p-4 transform transition-transform duration-500 ${step === 0 ? "translate-y-0" : "translate-y-0"}`}>
+      <div className={`sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg rounded-t-3xl shadow-2xl p-4 transform transition-transform duration-500`}>
         <h2 className="text-xl font-bold text-center mb-3">{steps[step].title}</h2>
         {steps[step].content}
         <div className="flex justify-between mt-4">
