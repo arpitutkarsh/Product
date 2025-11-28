@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo, Suspense, lazy } from "react";
-import axiosInstance from "../utils/axiosInstance.js";
+import axios from "axios";
 import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Clock, ImageOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import exclusiveDeals from "../assets/exc.png"
-import trending from "../assets/trendingnow.jpg"
+import exclusiveDeals from "../assets/exc.png";
+import trending from "../assets/trendingnow.jpg";
 const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
 
 const banners = [
@@ -28,6 +28,8 @@ const banners = [
     gradient: "from-red-400/50 via-orange-300/30 to-yellow-200/40",
   },
 ];
+
+const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
 function Home() {
   const [products, setProducts] = useState([]);
@@ -52,7 +54,7 @@ function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axiosInstance.get("/product/getAllProduct");
+        const res = await axios.get(`${BASE_URL}/getAllProduct`);
         setProducts(res.data.data || []);
       } catch (err) {
         console.error(err);
@@ -105,7 +107,7 @@ function Home() {
     localStorage.setItem("recentSearches", JSON.stringify(updated));
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     setError("");
     if (!searchId.trim()) {
@@ -113,24 +115,48 @@ function Home() {
       setShowSearch(false);
       return;
     }
-    saveRecentSearch(searchId.trim());
-    const matched = products.filter(p =>
-      p.productId?.toLowerCase().includes(searchId.trim().toLowerCase())
-    );
-    if (!matched.length) setError("Product does not exist.");
-    setSearchActive(true);
-    setShowSearch(false);
+
+    try {
+      // Get product by productId from backend
+      const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
+      if (!res.data.data) {
+        setError("Product does not exist.");
+        setSearchActive(true);
+        setShowSearch(false);
+        return;
+      }
+
+      // Save to recent searches
+      saveRecentSearch(res.data.data.productId);
+      setSearchActive(true);
+      setShowSearch(false);
+    } catch (err) {
+      setError("Product does not exist.");
+      setSearchActive(true);
+      setShowSearch(false);
+    }
   };
 
-  const handleRecentSearchClick = (item) => {
+  const handleRecentSearchClick = async (item) => {
     setSearchId(item.id);
-    saveRecentSearch(item.id);
-    const matched = products.filter(p =>
-      p.productId?.toLowerCase().includes(item.id.toLowerCase())
-    );
-    setError(matched.length ? "" : "Product does not exist.");
-    setSearchActive(true);
-    setShowSearch(false);
+
+    try {
+      const res = await axios.get(`${BASE_URL}/product/${item.id}`);
+      if (!res.data.data) {
+        setError("Product does not exist.");
+        setSearchActive(true);
+        setShowSearch(false);
+        return;
+      }
+      saveRecentSearch(item.id);
+      setError("");
+      setSearchActive(true);
+      setShowSearch(false);
+    } catch (err) {
+      setError("Product does not exist.");
+      setSearchActive(true);
+      setShowSearch(false);
+    }
   };
 
   const clearRecentSearches = () => {
@@ -149,7 +175,6 @@ function Home() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
-
       {/* Floating Search */}
       <div className="fixed top-10 right-6 z-50">
         <div className="relative">
@@ -254,36 +279,7 @@ function Home() {
 
       {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
-      {/* Banner */}
-      <div className="relative w-full h-64 md:h-80 lg:h-96 mb-10 rounded-xl overflow-hidden shadow-lg">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentBanner}
-            src={banners[currentBanner].src}
-            alt={banners[currentBanner].title}
-            loading="lazy"
-            className="w-full h-full object-cover"
-            initial={{ opacity: 0, scale: 1.2 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 1.2 }}
-          />
-        </AnimatePresence>
-
-        <motion.div
-          key={currentBanner + "-text"}
-          className={`absolute inset-0 bg-gradient-to-r ${banners[currentBanner].gradient} flex flex-col items-center justify-center px-4 text-center`}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          transition={{ duration: 1 }}
-        >
-          <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-wide mb-2 drop-shadow-lg">
-            {banners[currentBanner].title}
-          </h2>
-          <p className="text-gray-100 text-lg sm:text-xl md:text-2xl drop-shadow">{banners[currentBanner].subtitle}</p>
-        </motion.div>
-      </div>
+      {/* Banner temporarily hidden */}
 
       {/* Recently Added */}
       {recentProducts.length > 0 && (
@@ -332,7 +328,7 @@ function Home() {
           </div>
         </>
       ) : (
-        !error && <p className="text-center text-gray-600">No products found.</p>
+        !error && <p className="text-center mt-50 text-gray-600">No products found.</p>
       )}
 
       <style>{`

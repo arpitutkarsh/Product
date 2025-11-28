@@ -29,7 +29,8 @@ if (process.env.NODE_ENV === "development") {
 // Allowed origins
 const allowedOrigins = [
   "https://admin-dhg0.onrender.com", // frontend production
-  "http://localhost:5173",           // local dev
+  "http://localhost:5173",  
+  "https://smart-buy-d03e.onrender.com"     // local dev
 ];
 
 // CORS middleware
