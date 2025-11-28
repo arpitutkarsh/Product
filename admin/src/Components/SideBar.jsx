@@ -64,9 +64,8 @@ const SideBar = () => {
 
       {/* Mobile Bottom Sheet */}
       <div
-        className={`fixed w-full left-0 z-[99999] bg-white rounded-t-2xl sm:hidden shadow-xl transition-transform duration-300 ${
-          sidebarOpen ? "translate-y-0" : "translate-y-[110%]"
-        }`}
+        className={`fixed w-full max-h-[85vh] left-0 z-[99999] bg-white rounded-t-2xl sm:hidden shadow-2xl overflow-y-auto transition-transform duration-500 ease-out
+        ${sidebarOpen ? "translate-y-0" : "translate-y-full"}`}
         style={{ bottom: 0 }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -106,7 +105,6 @@ const SideBar = () => {
 
       {/* Desktop Sidebar (UNCHANGED) */}
       <div className="hidden sm:flex fixed top-0 left-0 w-72 h-screen bg-white border-r shadow-lg p-6 flex-col justify-between overflow-hidden">
-        {/* Animated Floating Background */}
         <div className="absolute w-36 h-36 bg-pink-400 rounded-full opacity-30 top-[-50px] left-[-50px] animate-diagonalSlow"></div>
         <div className="absolute w-48 h-48 bg-pink-300 rounded-full opacity-20 bottom-[-80px] right-[-60px] animate-diagonalSlowReverse"></div>
         <div className="absolute w-24 h-24 bg-pink-500 rounded-full opacity-25 top-[150px] right-[50px] animate-diagonalSlow"></div>
