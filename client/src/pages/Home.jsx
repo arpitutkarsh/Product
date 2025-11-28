@@ -44,13 +44,11 @@ function Home() {
 
   const navigate = useNavigate();
 
-  // Load recent searches
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(stored);
   }, []);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -65,13 +63,11 @@ function Home() {
     fetchProducts();
   }, []);
 
-  // Banner rotation
   useEffect(() => {
     const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
     return () => clearInterval(timer);
   }, []);
 
-  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
@@ -170,7 +166,6 @@ function Home() {
 
   if (loading) return <Loader />;
 
-  // Framer-motion variants for responsive slide
   const searchVariants = {
     hidden: { x: "100%", y: 0 },
     visible: { x: 0, y: 0 },
@@ -178,17 +173,16 @@ function Home() {
     mobileVisible: { x: 0, y: 0 },
   };
 
-  // Detect mobile width
   const isMobile = window.innerWidth < 640;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8 hide-scrollbar">
       {/* Floating Search */}
-      <div className="fixed top-10 right-6 z-50">
+      <div className="fixed top-4 sm:top-6 md:top-10 right-4 sm:right-6 md:right-8 z-50">
         <div className="relative">
           <button
             onClick={() => setShowSearch(true)}
-            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 rounded-full shadow-xl hover:scale-110 transition transform"
+            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 sm:p-3.5 md:p-4 rounded-full shadow-xl hover:scale-110 transition transform"
             title="Search Product"
           >
             <Search size={22} />
@@ -196,7 +190,7 @@ function Home() {
           {searchActive && (
             <button
               onClick={clearSearch}
-              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition"
+              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 sm:p-1.5 shadow hover:bg-red-700 transition"
               title="Clear Search"
             >
               <X size={12} />
@@ -222,36 +216,34 @@ function Home() {
               exit={isMobile ? "mobileHidden" : "hidden"}
               variants={searchVariants}
               transition={{ type: "spring", stiffness: 120, damping: 20 }}
-              className={`fixed z-50 flex flex-col p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
-                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
+              className={`fixed z-50 flex flex-col p-4 sm:p-6 md:p-8 backdrop-blur-md bg-white/95 shadow-2xl overflow-y-auto hide-scrollbar
+                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-72 sm:w-80 md:w-96 h-full rounded-l-xl"}
               `}
             >
-              {/* Search Form */}
               <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
                 <input
                   type="text"
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
                   placeholder="Search by Product ID..."
-                  className="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-grow p-2 sm:p-2.5 md:p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   autoFocus
                 />
                 <button
                   type="submit"
-                  className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
+                  className="bg-purple-500 text-white px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 rounded-lg hover:bg-purple-600 transition"
                 >
                   Search
                 </button>
               </form>
 
-              {/* Recent Searches */}
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold text-gray-700">Recent Searches</h4>
+                    <h4 className="font-semibold text-gray-700 text-sm sm:text-base md:text-lg">Recent Searches</h4>
                     <button
                       onClick={clearRecentSearches}
-                      className="text-red-500 text-sm hover:underline"
+                      className="text-red-500 text-xs sm:text-sm hover:underline"
                     >
                       Clear All
                     </button>
@@ -260,7 +252,7 @@ function Home() {
                     {recentSearches.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
+                        className="flex items-center justify-between p-2 sm:p-2.5 md:p-3 rounded-lg hover:bg-gray-200 cursor-pointer"
                       >
                         <div
                           className="flex items-center gap-2"
@@ -270,10 +262,10 @@ function Home() {
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="w-8 h-8 object-cover rounded"
+                              className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 object-cover rounded"
                             />
                           )}
-                          <span className="text-gray-700">{item.name}</span>
+                          <span className="text-gray-700 text-sm sm:text-base md:text-base">{item.name}</span>
                         </div>
                         <button
                           onClick={() => removeSingleRecent(item.id)}
@@ -294,11 +286,10 @@ function Home() {
 
       {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
-      {/* All Products with NEW badge */}
       {filteredProducts.length > 0 ? (
         <>
-          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mt-32 mb-6 text-center">All Products</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 hide-scrollbar">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
@@ -316,7 +307,7 @@ function Home() {
                     <ProductCard product={p} />
 
                     {isNew && (
-                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs sm:text-sm md:text-sm font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
                       </div>
                     )}
@@ -327,7 +318,7 @@ function Home() {
           </div>
         </>
       ) : (
-        !error && <p className="text-center mt-50 text-gray-600">No products found.</p>
+        !error && <p className="text-center mt-12 sm:mt-16 md:mt-20 text-gray-600 text-sm sm:text-base md:text-base">No products found.</p>
       )}
 
       <style>{`

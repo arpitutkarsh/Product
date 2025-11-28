@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import SideBar from "../Components/SideBar.jsx";
+import SideBar from "../Components/SideBar.jsx"; // your sidebar component
 import axiosInstance from "../utils/axiosInstance.js";
+import { useNavigate } from "react-router-dom";
 
 const AddProduct = () => {
   const maintenanceMode = false;
-
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -13,16 +13,15 @@ const AddProduct = () => {
     link: "",
     category: "",
   });
-
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Mobile stepper state
   const [currentStep, setCurrentStep] = useState(0);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -37,9 +36,7 @@ const AddProduct = () => {
     fetchCategories();
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
@@ -90,7 +87,7 @@ const AddProduct = () => {
         setVideos([]);
         setImageProgress(0);
         setVideoProgress(0);
-        setCurrentStep(0); // reset stepper on mobile
+        setCurrentStep(0);
       }
     } catch (error) {
       console.error(error);
@@ -116,10 +113,7 @@ const AddProduct = () => {
             )}
             <button
               type="button"
-              onClick={() => {
-                const updatedFiles = files.filter((_, i) => i !== index);
-                setFiles(updatedFiles);
-              }}
+              onClick={() => setFiles(files.filter((_, i) => i !== index))}
               className="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             >
               &minus;
@@ -130,17 +124,16 @@ const AddProduct = () => {
     );
   };
 
-  // Mobile Stepper Steps
   const steps = [
     { title: "Basic Info", content: (
       <>
-        <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Product Title" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm mb-3" required />
+        <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Product Title" className="w-full border border-gray-300 rounded-xl p-3 mb-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Product Description" rows="4" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
       </>
     ) },
     { title: "IDs & Links", content: (
       <>
-        <input type="text" name="productId" value={formData.productId} onChange={handleChange} placeholder="Product ID" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm mb-3" required />
+        <input type="text" name="productId" value={formData.productId} onChange={handleChange} placeholder="Product ID" className="w-full border border-gray-300 rounded-xl p-3 mb-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
         <input type="text" name="link" value={formData.link} onChange={handleChange} placeholder="Product Link" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
       </>
     ) },
@@ -160,7 +153,6 @@ const AddProduct = () => {
           {renderPreviews(images, "image", setImages)}
           {loading && imageProgress > 0 && <p className="text-sm text-gray-700 mt-1">Uploading Images: {imageProgress}%</p>}
         </div>
-
         <div className="mt-4">
           <label className="block mb-2 font-medium">Upload Videos</label>
           <input type="file" name="videos" accept="video/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
@@ -173,97 +165,64 @@ const AddProduct = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 relative">
-      {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-screen z-20 overflow-y-auto bg-white shadow-lg transition-transform duration-300
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} sm:translate-x-0 sm:relative sm:h-auto sm:w-72`}>
-        <SideBar />
-      </div>
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-10 sm:hidden" onClick={() => setSidebarOpen(false)}></div>}
+      {/* Sidebar Component */}
+      <SideBar />
 
       {!maintenanceMode && (
-        <div className="flex flex-1 justify-center items-start p-4 sm:p-8 ml-0 sm:ml-72 transition-all duration-300">
-          <div className="w-full max-w-3xl">
-            {/* Hamburger for mobile */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="sm:hidden mb-4 bg-gray-200 p-2 rounded-md shadow hover:bg-gray-300 transition"
-            >
-              &#9776;
+        <div className="flex flex-1 justify-center items-start p-4 sm:p-8 ml-0 sm:ml-72 transition-all duration-300 w-full max-w-3xl">
+          {/* Desktop Form */}
+          <form onSubmit={handleSubmit} className="hidden sm:flex flex-col bg-white rounded-3xl shadow-2xl p-8 border border-gray-200 gap-4 animate-slideUp">
+            <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">Add New Product</h2>
+            <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Product Title" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
+            <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Product Description" rows="4" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
+            <input type="text" name="productId" value={formData.productId} onChange={handleChange} placeholder="Product ID" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
+            <input type="text" name="link" value={formData.link} onChange={handleChange} placeholder="Product Link" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
+            <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required>
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+            <div>
+              <label className="block mb-2 font-medium">Upload Images</label>
+              <input type="file" name="images" accept="image/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
+              {renderPreviews(images, "image", setImages)}
+            </div>
+            <div>
+              <label className="block mb-2 font-medium mt-4">Upload Videos</label>
+              <input type="file" name="videos" accept="video/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
+              {renderPreviews(videos, "video", setVideos)}
+            </div>
+            <button type="submit" disabled={loading} className={`mt-4 w-full py-3 rounded-2xl text-white font-bold text-lg transition shadow-lg ${loading ? "bg-purple-400 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"}`}>
+              {loading ? "Adding Product..." : "Add Product"}
             </button>
+          </form>
 
-            {/* Desktop form */}
-            <form
-              onSubmit={handleSubmit}
-              className="hidden sm:flex flex-col bg-white rounded-3xl shadow-2xl p-8 border border-gray-200 gap-4 animate-slideUp"
-            >
-              <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">Add New Product</h2>
-              <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Product Title" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
-              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Product Description" rows="4" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
-              <input type="text" name="productId" value={formData.productId} onChange={handleChange} placeholder="Product ID" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
-              <input type="text" name="link" value={formData.link} onChange={handleChange} placeholder="Product Link" className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required />
-              <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-purple-500 outline-none shadow-sm" required>
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>{cat.name}</option>
-                ))}
-              </select>
-              <div>
-                <label className="block mb-2 font-medium">Upload Images</label>
-                <input type="file" name="images" accept="image/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
-                {renderPreviews(images, "image", setImages)}
-              </div>
-              <div>
-                <label className="block mb-2 font-medium mt-4">Upload Videos</label>
-                <input type="file" name="videos" accept="video/*" multiple onChange={handleFileChange} className="w-full border border-gray-300 rounded-xl p-3" />
-                {renderPreviews(videos, "video", setVideos)}
-              </div>
-              <button type="submit" disabled={loading} className={`mt-4 w-full py-3 rounded-2xl text-white font-bold text-lg transition shadow-lg ${loading ? "bg-purple-400 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"}`}>
-                {loading ? "Adding Product..." : "Add Product"}
+          {/* Mobile Stepper Form */}
+          <div className="sm:hidden bg-white rounded-3xl shadow-2xl p-6 border border-gray-200 animate-slideUp w-full">
+            <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">{steps[currentStep].title}</h2>
+            {steps[currentStep].content}
+            <div className="flex justify-between mt-6">
+              <button onClick={() => setCurrentStep(prev => Math.max(prev - 1, 0))} disabled={currentStep === 0} className="px-4 py-2 bg-gray-300 rounded-xl font-medium hover:bg-gray-400 transition disabled:opacity-50">
+                Back
               </button>
-            </form>
-
-            {/* Mobile stepper form */}
-            <div className="sm:hidden bg-white rounded-3xl shadow-2xl p-6 border border-gray-200 animate-slideUp">
-              <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">{steps[currentStep].title}</h2>
-              {steps[currentStep].content}
-              <div className="flex justify-between mt-6">
-                <button
-                  onClick={() => setCurrentStep(prev => Math.max(prev - 1, 0))}
-                  disabled={currentStep === 0}
-                  className="px-4 py-2 bg-gray-300 rounded-xl font-medium hover:bg-gray-400 transition disabled:opacity-50"
-                >
-                  Back
+              {currentStep < steps.length - 1 ? (
+                <button onClick={() => setCurrentStep(prev => prev + 1)} className="px-4 py-2 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition">
+                  Next
                 </button>
-                {currentStep < steps.length - 1 ? (
-                  <button
-                    onClick={() => setCurrentStep(prev => prev + 1)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition"
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className={`px-4 py-2 text-white rounded-xl font-medium transition ${loading ? "bg-purple-400 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"}`}
-                  >
-                    {loading ? "Adding..." : "Submit"}
-                  </button>
-                )}
-              </div>
+              ) : (
+                <button onClick={handleSubmit} disabled={loading} className={`px-4 py-2 text-white rounded-xl font-medium transition ${loading ? "bg-purple-400 cursor-not-allowed" : "bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600"}`}>
+                  {loading ? "Adding..." : "Submit"}
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
       <style>{`
-        .animate-slideUp {
-          animation: slideUp 0.5s ease-out;
-        }
-        @keyframes slideUp {
-          0% { transform: translateY(50px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
+        .animate-slideUp { animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { 0% { transform: translateY(50px); opacity:0 } 100% { transform: translateY(0); opacity:1 } }
       `}</style>
     </div>
   );
