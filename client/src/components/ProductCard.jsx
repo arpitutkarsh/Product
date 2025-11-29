@@ -62,7 +62,7 @@ const ProductCard = ({ product }) => {
               {media[currentIndex] === "QR_CODE" ? (
                 <div onClick={(e) => { e.stopPropagation(); goToProductDetail(); }}
                   className="flex flex-col items-center justify-center p-4 bg-white/40 backdrop-blur-lg rounded-xl shadow-md border border-white/30">
-                  <QRCodeCanvas value={`/product/${product._id}`} size={isMobile ? 100 : 120} level="H" />
+                  <QRCodeCanvas value={`https://smart-buy-d03e.onrender.com/api/ver1/product/${product._id}`} size={isMobile ? 100 : 120} level="H" />
                   <p className="text-gray-700 text-sm mt-2 font-medium text-center">Scan to view</p>
                 </div>
               ) : media[currentIndex].endsWith(".mp4") ? (
