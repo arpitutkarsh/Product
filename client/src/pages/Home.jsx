@@ -4,7 +4,30 @@ import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import exclusiveDeals from "../assets/exc.png";
+import trending from "../assets/trendingnow.jpg";
 const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
+
+const banners = [
+  {
+    src: "/banners/banner1.jpg",
+    title: "Welcome to Smart Buy",
+    subtitle: "Curated luxury at your fingertips",
+    gradient: "from-purple-600/60 via-pink-400/40 to-yellow-300/30",
+  },
+  {
+    src: exclusiveDeals,
+    title: "Exclusive Deals",
+    subtitle: "Unveil premium discounts today",
+    gradient: "from-green-400/50 via-blue-500/30 to-indigo-500/50",
+  },
+  {
+    src: trending,
+    title: "Trending Now",
+    subtitle: "Discover what’s loved this week",
+    gradient: "from-red-400/50 via-orange-300/30 to-yellow-200/40",
+  },
+];
 
 const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
@@ -15,10 +38,11 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
+  const [currentBanner, setCurrentBanner] = useState(0);
   const [visibleCount, setVisibleCount] = useState(8);
   const [recentSearches, setRecentSearches] = useState([]);
+
   const navigate = useNavigate();
-  const isMobile = window.innerWidth < 640;
 
   // Load recent searches
   useEffect(() => {
@@ -39,6 +63,12 @@ function Home() {
       }
     };
     fetchProducts();
+  }, []);
+
+  // Banner rotation
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
+    return () => clearInterval(timer);
   }, []);
 
   // Infinite scroll
@@ -62,8 +92,10 @@ function Home() {
   const saveRecentSearch = (id) => {
     const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
     if (!product) return;
+
     const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
-    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)].slice(0, 5);
+    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)];
+    updated = updated.slice(0, 5);
     setRecentSearches(updated);
     localStorage.setItem("recentSearches", JSON.stringify(updated));
   };
@@ -76,6 +108,7 @@ function Home() {
       setShowSearch(false);
       return;
     }
+
     try {
       const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
       if (!res.data.data) {
@@ -84,6 +117,7 @@ function Home() {
         setShowSearch(false);
         return;
       }
+
       saveRecentSearch(res.data.data.productId);
       setSearchActive(true);
       setShowSearch(false);
@@ -96,6 +130,7 @@ function Home() {
 
   const handleRecentSearchClick = async (item) => {
     setSearchId(item.id);
+
     try {
       const res = await axios.get(`${BASE_URL}/product/${item.id}`);
       if (!res.data.data) {
@@ -135,6 +170,7 @@ function Home() {
 
   if (loading) return <Loader />;
 
+  // Framer-motion variants for responsive slide
   const searchVariants = {
     hidden: { x: "100%", y: 0 },
     visible: { x: 0, y: 0 },
@@ -142,15 +178,17 @@ function Home() {
     mobileVisible: { x: 0, y: 0 },
   };
 
-  return (
-    <div className="relative min-h-screen bg-gray-50 hide-scrollbar pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8">
+  // Detect mobile width
+  const isMobile = window.innerWidth < 640;
 
-      {/* Floating Search Button */}
-      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
+  return (
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+      {/* Floating Search */}
+      <div className="fixed top-10 right-6 z-50">
         <div className="relative">
           <button
             onClick={() => setShowSearch(true)}
-            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:scale-110 transition transform flex items-center justify-center"
+            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 rounded-full shadow-xl hover:scale-110 transition transform"
             title="Search Product"
           >
             <Search size={22} />
@@ -184,27 +222,29 @@ function Home() {
               exit={isMobile ? "mobileHidden" : "hidden"}
               variants={searchVariants}
               transition={{ type: "spring", stiffness: 120, damping: 20 }}
-              className={`fixed z-50 flex flex-col p-4 sm:p-6 backdrop-blur-md bg-white/95 shadow-2xl overflow-y-auto hide-scrollbar
-                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-96 h-full rounded-l-xl"}
+              className={`fixed z-50 flex flex-col p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
+                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
               `}
             >
+              {/* Search Form */}
               <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
                 <input
                   type="text"
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
                   placeholder="Search by Product ID..."
-                  className="flex-grow p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   autoFocus
                 />
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+                  className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
                 >
                   Search
                 </button>
               </form>
 
+              {/* Recent Searches */}
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -220,7 +260,7 @@ function Home() {
                     {recentSearches.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
                       >
                         <div
                           className="flex items-center gap-2"
@@ -230,14 +270,14 @@ function Home() {
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="w-12 h-12 object-cover rounded shadow-sm"
+                              className="w-8 h-8 object-cover rounded"
                             />
                           )}
-                          <span className="text-gray-700 font-medium">{item.name}</span>
+                          <span className="text-gray-700">{item.name}</span>
                         </div>
                         <button
                           onClick={() => removeSingleRecent(item.id)}
-                          className="text-red-500 hover:text-red-700 transition"
+                          className="text-red-500 hover:text-red-700"
                           title="Remove"
                         >
                           <X size={16} />
@@ -254,14 +294,15 @@ function Home() {
 
       {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
-      {/* Products Grid */}
+      {/* All Products with NEW badge */}
       {filteredProducts.length > 0 ? (
-        <div className="max-w-7xl mx-auto">
-          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+        <>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
+
                 return (
                   <motion.div
                     key={p._id}
@@ -273,6 +314,7 @@ function Home() {
                     onClick={() => navigate(`/product/${p._id}`)}
                   >
                     <ProductCard product={p} />
+
                     {isNew && (
                       <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
@@ -283,9 +325,9 @@ function Home() {
               })}
             </Suspense>
           </div>
-        </div>
+        </>
       ) : (
-        !error && <p className="text-center mt-10 text-gray-600">No products found.</p>
+        !error && <p className="text-center mt-50 text-gray-600">No products found.</p>
       )}
 
       <style>{`
