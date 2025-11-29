@@ -44,13 +44,11 @@ function Home() {
 
   const navigate = useNavigate();
 
-  // Load recent searches
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(stored);
   }, []);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -65,13 +63,11 @@ function Home() {
     fetchProducts();
   }, []);
 
-  // Banner rotation
   useEffect(() => {
     const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
     return () => clearInterval(timer);
   }, []);
 
-  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
@@ -180,7 +176,7 @@ function Home() {
   const isMobile = window.innerWidth < 640;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar" style={{ paddingTop: "6rem" }}>
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar mt-24">
       {/* Floating Search */}
       <div className="fixed top-10 right-6 z-50">
         <div className="relative">
