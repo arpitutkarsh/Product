@@ -1,234 +1,177 @@
-// ✨ Ready to paste — Home Page UI improved & responsive, recent searches shown ✨
-import { useEffect, useState, useMemo, Suspense, lazy } from "react";
-import axios from "axios";
-import Loader from "../components/Loader.jsx";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import exclusiveDeals from "../assets/exc.png";
-import trending from "../assets/trendingnow.jpg";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
+import { useSwipeable } from "react-swipeable";
 
-const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
-const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
-
-function Home() {
-  const [products, setProducts] = useState([]);
-  const [searchId, setSearchId] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchActive, setSearchActive] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(8);
-  const [recentSearches, setRecentSearches] = useState([]);
-  const [currentBanner, setCurrentBanner] = useState(0);
-
+const ProductCard = ({ product }) => {
   const navigate = useNavigate();
+  const media = product.images?.length > 0 ? [...product.images, "QR_CODE"] : ["QR_CODE"];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const videoRef = useRef(null);
 
-  const banners = [
-    {
-      src: "/banners/banner1.jpg",
-      title: "Smart Buy",
-      subtitle: "Luxury at your fingertips",
-      gradient: "from-blue-600/50 via-purple-500/40 to-pink-400/40",
-    },
-    {
-      src: exclusiveDeals,
-      title: "Exclusive Deals",
-      subtitle: "Unveil premium discounts",
-      gradient: "from-green-500/50 via-blue-500/30 to-indigo-500/40",
-    },
-    {
-      src: trending,
-      title: "Trending Now",
-      subtitle: "Most-loved this week",
-      gradient: "from-red-400/50 via-orange-300/30 to-yellow-300/40",
-    },
-  ];
+  const isMobile = window.innerWidth < 640;
 
-  // Load recent searches from localStorage
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
-    setRecentSearches(stored);
+    const timer = setTimeout(() => setLoaded(true), 1000);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Fetch products
+  // Carousel auto-slide for desktop
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/getAllProduct`);
-        setProducts(res.data.data || []);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+    if (!media.length || isHovered || isVideoPlaying || isMobile) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % media.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [media.length, isHovered, isVideoPlaying, isMobile]);
 
-  // Banner rotation
-  useEffect(() => {
-    const timer = setInterval(
-      () => setCurrentBanner(prev => (prev + 1) % banners.length),
-      4000
-    );
-    return () => clearInterval(timer);
-  }, []);
+  const nextSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % media.length); };
+  const prevSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1)); };
+  const handleVideoPlay = () => setIsVideoPlaying(true);
+  const handleVideoPause = () => setIsVideoPlaying(false);
+  const goToProductDetail = () => navigate(`/product/${product._id}`);
 
-  // Infinite scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-        setVisibleCount(prev => prev + 8);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Filter products by search
-  const filteredProducts = useMemo(() => {
-    if (!searchId.trim()) return products;
-    return products.filter(p =>
-      p.productId?.toLowerCase().includes(searchId.trim().toLowerCase())
-    );
-  }, [products, searchId]);
-
-  const handleSearch = (value) => {
-    setSearchId(value);
-    setSearchActive(true);
-    setShowSearch(false);
-    // Save to recent searches
-    const updatedRecent = [value, ...recentSearches.filter(v => v !== value)].slice(0, 5);
-    setRecentSearches(updatedRecent);
-    localStorage.setItem("recentSearches", JSON.stringify(updatedRecent));
-  };
-
-  const clearSearch = () => {
-    setSearchId("");
-    setSearchActive(false);
-  };
-
-  if (loading) return <Loader />;
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => nextSlide(),
+    onSwipedRight: () => prevSlide(),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true,
+  });
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* 🔹 Sticky Header with Search */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-md flex items-center justify-between px-4 sm:px-6 py-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Smart Buy</h1>
-        <button
-          onClick={() => setShowSearch(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-md"
-        >
-          <Search size={20} />
-        </button>
-      </div>
-
-      {/* 🔹 Banner Slider */}
-      <div className="relative w-full h-52 sm:h-64 md:h-72 overflow-hidden rounded-b-xl shadow mt-3">
-        <motion.img
-          key={currentBanner}
-          src={banners[currentBanner].src}
-          initial={{ opacity: 0.4, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-r ${banners[currentBanner].gradient}`}
-        />
-        <div className="absolute left-6 bottom-6 text-white">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-lg">
-            {banners[currentBanner].title}
-          </h2>
-          <p className="text-sm sm:text-base opacity-90">
-            {banners[currentBanner].subtitle}
-          </p>
-        </div>
-      </div>
-
-      {/* 🔻 Slide Search Drawer */}
-      <AnimatePresence>
-        {showSearch && (
-          <>
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      onClick={goToProductDetail}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        if (videoRef.current) videoRef.current.pause();
+        setIsVideoPlaying(false);
+      }}
+      className="bg-white/30 backdrop-blur-md border border-white/20 rounded-3xl shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col"
+    >
+      {/* Media Carousel */}
+      <div
+        {...swipeHandlers}
+        className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center"
+      >
+        {!loaded ? (
+          <div className="w-full h-full bg-gray-300 animate-pulse rounded-t-3xl" />
+        ) : media.length > 0 ? (
+          <AnimatePresence mode="wait">
             <motion.div
-              onClick={() => setShowSearch(false)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.2 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-40"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 20 }}
-              className="fixed bottom-0 left-0 w-full bg-white p-5 rounded-t-2xl z-50 shadow-2xl"
+              key={currentIndex}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex justify-center items-center"
             >
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSearch(searchId);
-                }}
-                className="flex gap-3"
-              >
-                <input
-                  type="text"
-                  placeholder="Enter Product ID"
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
-                  autoFocus
-                  className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500"
+              {media[currentIndex] === "QR_CODE" ? (
+                <div
+                  onClick={(e) => { e.stopPropagation(); goToProductDetail(); }}
+                  className="flex flex-col items-center justify-center p-4 bg-white/40 backdrop-blur-lg rounded-xl shadow-md border border-white/30"
+                >
+                  <QRCodeCanvas
+                    value={`/product/${product._id}`}
+                    size={isMobile ? 100 : 120}
+                    level="H"
+                  />
+                  <p className="text-gray-700 text-sm mt-2 font-medium text-center">
+                    Scan to view
+                  </p>
+                </div>
+              ) : media[currentIndex].endsWith(".mp4") ? (
+                <video
+                  ref={videoRef}
+                  src={media[currentIndex]}
+                  onPlay={handleVideoPlay}
+                  onPause={handleVideoPause}
+                  onEnded={handleVideoPause}
+                  controls
+                  muted
+                  autoPlay
+                  className="w-full h-full object-cover rounded-t-3xl"
                 />
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg">
-                  Search
-                </button>
-              </form>
+              ) : (
+                <img
+                  src={media[currentIndex]}
+                  alt={product.title}
+                  className="w-full h-full object-cover rounded-t-3xl"
+                />
+              )}
             </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+            <ImageOff size={40} />
+            <span className="text-sm mt-2">No Media</span>
+          </div>
+        )}
+
+        {/* Arrows */}
+        {media.length > 1 && loaded && !isMobile && (
+          <>
+            <button
+              onClick={prevSlide}
+              className={`absolute top-1/2 left-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity`}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={nextSlide}
+              className={`absolute top-1/2 right-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity`}
+            >
+              <ChevronRight size={20} />
+            </button>
           </>
         )}
-      </AnimatePresence>
-
-      {/* 🔹 Recent Searches */}
-      {recentSearches.length > 0 && (
-        <div className="px-4 sm:px-6 md:px-10 mt-6">
-          <h4 className="text-gray-700 font-semibold mb-2">Recent Searches:</h4>
-          <div className="flex flex-wrap gap-2">
-            {recentSearches.map((item, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSearch(item)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-full text-sm transition"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 🏷️ Section Title */}
-      <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mt-6 mb-6 text-center">
-        Explore Products
-      </h3>
-
-      {/* 🛍 Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-4 sm:px-6 md:px-10 pb-12">
-        <Suspense fallback={<Loader />}>
-          {filteredProducts.slice(0, visibleCount).map((p, i) => (
-            <motion.div
-              key={p._id}
-              whileHover={{ scale: 1.03 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="bg-white rounded-2xl shadow hover:shadow-xl transition p-3 cursor-pointer"
-              onClick={() => navigate(`/product/${p._id}`)}
-            >
-              <ProductCard product={p} />
-            </motion.div>
-          ))}
-        </Suspense>
       </div>
-    </div>
-  );
-}
 
-export default Home;
+      {/* Product Info */}
+      <div className="p-4 flex flex-col flex-grow justify-between">
+        {!loaded ? (
+          <div className="space-y-2">
+            <div className="h-5 bg-gray-300 rounded w-3/4 mx-auto animate-pulse" />
+            <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto animate-pulse" />
+            <div className="h-3 bg-gray-300 rounded w-full mx-auto animate-pulse mt-2" />
+          </div>
+        ) : (
+          <>
+            <h3 className="font-bold text-lg md:text-xl text-gray-900 text-center truncate">
+              {product.title}
+            </h3>
+            <p className="text-sm md:text-base text-gray-600 text-center mt-1">
+              {product.category?.name || "Uncategorized"}
+            </p>
+            <p className="text-gray-500 text-sm mt-2 line-clamp-2 text-center">
+              {product.description || "No description available."}
+            </p>
+            <p className="text-gray-800 text-sm font-mono text-center mt-3">
+              Product ID: <span className="font-semibold">{product.productId}</span>
+            </p>
+            {product.link && (
+              <a
+                href={product.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-3 hover:underline hover:text-pink-500 transition"
+              >
+                <ExternalLink size={14} />
+                View Product
+              </a>
+            )}
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+export default ProductCard;
