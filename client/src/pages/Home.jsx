@@ -41,8 +41,8 @@ function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [visibleCount, setVisibleCount] = useState(8);
   const [recentSearches, setRecentSearches] = useState([]);
-
   const navigate = useNavigate();
+  const isMobile = window.innerWidth < 640;
 
   // Load recent searches
   useEffect(() => {
@@ -130,7 +130,6 @@ function Home() {
 
   const handleRecentSearchClick = async (item) => {
     setSearchId(item.id);
-
     try {
       const res = await axios.get(`${BASE_URL}/product/${item.id}`);
       if (!res.data.data) {
@@ -177,16 +176,33 @@ function Home() {
     mobileVisible: { x: 0, y: 0 },
   };
 
-  const isMobile = window.innerWidth < 640;
-
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 hide-scrollbar pt-24 sm:pt-28 md:pt-32 px-4 sm:px-6 lg:px-8">
-      {/* Floating Search */}
-      <div className="fixed top-10 right-6 z-50">
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 hide-scrollbar pt-16 sm:pt-20 md:pt-24 px-3 sm:px-6 lg:px-8">
+
+      {/* Banner */}
+      <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden mb-6 sm:mb-8 shadow-lg">
+        <img
+          src={banners[currentBanner].src}
+          alt={banners[currentBanner].title}
+          className="w-full h-full object-cover"
+        />
+        <div className={`absolute inset-0 bg-gradient-to-t ${banners[currentBanner].gradient} mix-blend-overlay`} />
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 md:p-8">
+          <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
+            {banners[currentBanner].title}
+          </h2>
+          <p className="text-white/90 text-sm sm:text-base md:text-lg mt-1 drop-shadow-md">
+            {banners[currentBanner].subtitle}
+          </p>
+        </div>
+      </div>
+
+      {/* Floating Search Button */}
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
         <div className="relative">
           <button
             onClick={() => setShowSearch(true)}
-            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 rounded-full shadow-xl hover:scale-110 transition transform"
+            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-2 sm:p-3 rounded-full shadow-xl hover:scale-110 transition transform"
             title="Search Product"
           >
             <Search size={22} />
@@ -220,7 +236,7 @@ function Home() {
               exit={isMobile ? "mobileHidden" : "hidden"}
               variants={searchVariants}
               transition={{ type: "spring", stiffness: 120, damping: 20 }}
-              className={`fixed z-50 flex flex-col p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
+              className={`fixed z-50 flex flex-col p-4 sm:p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
                 ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
               `}
             >
@@ -256,7 +272,7 @@ function Home() {
                     {recentSearches.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer transition"
                       >
                         <div
                           className="flex items-center gap-2"
@@ -266,14 +282,14 @@ function Home() {
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="w-8 h-8 object-cover rounded"
+                              className="w-10 h-10 object-cover rounded shadow-sm"
                             />
                           )}
-                          <span className="text-gray-700">{item.name}</span>
+                          <span className="text-gray-700 font-medium">{item.name}</span>
                         </div>
                         <button
                           onClick={() => removeSingleRecent(item.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 transition"
                           title="Remove"
                         >
                           <X size={16} />
@@ -290,10 +306,11 @@ function Home() {
 
       {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
+      {/* Products Grid */}
       {filteredProducts.length > 0 ? (
         <>
           <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
@@ -305,13 +322,13 @@ function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="relative cursor-pointer"
+                    className={`relative cursor-pointer ${i === 0 && isMobile ? 'mt-2 sm:mt-4' : ''}`}
                     onClick={() => navigate(`/product/${p._id}`)}
                   >
                     <ProductCard product={p} />
 
                     {isNew && (
-                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                      <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
                       </div>
                     )}
