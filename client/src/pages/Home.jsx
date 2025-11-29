@@ -182,7 +182,7 @@ function Home() {
   const isMobile = window.innerWidth < 640;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+    <div className="relative mt-20 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
       {/* Floating Search */}
       <div className="fixed top-10 right-6 z-50">
         <div className="relative">
