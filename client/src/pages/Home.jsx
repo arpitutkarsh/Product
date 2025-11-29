@@ -63,8 +63,7 @@ function Home() {
     const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
     if (!product) return;
     const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
-    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)];
-    updated = updated.slice(0, 5);
+    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)].slice(0, 5);
     setRecentSearches(updated);
     localStorage.setItem("recentSearches", JSON.stringify(updated));
   };
@@ -144,14 +143,14 @@ function Home() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 hide-scrollbar pt-4 sm:pt-6 px-3 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-gray-50 hide-scrollbar pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8">
 
       {/* Floating Search Button */}
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
         <div className="relative">
           <button
             onClick={() => setShowSearch(true)}
-            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-2 sm:p-3 rounded-full shadow-xl hover:scale-110 transition transform"
+            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:scale-110 transition transform flex items-center justify-center"
             title="Search Product"
           >
             <Search size={22} />
@@ -185,8 +184,8 @@ function Home() {
               exit={isMobile ? "mobileHidden" : "hidden"}
               variants={searchVariants}
               transition={{ type: "spring", stiffness: 120, damping: 20 }}
-              className={`fixed z-50 flex flex-col p-4 sm:p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
-                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
+              className={`fixed z-50 flex flex-col p-4 sm:p-6 backdrop-blur-md bg-white/95 shadow-2xl overflow-y-auto hide-scrollbar
+                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-96 h-full rounded-l-xl"}
               `}
             >
               <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
@@ -195,12 +194,12 @@ function Home() {
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
                   placeholder="Search by Product ID..."
-                  className="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-grow p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
                 <button
                   type="submit"
-                  className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
+                  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
                 >
                   Search
                 </button>
@@ -221,7 +220,7 @@ function Home() {
                     {recentSearches.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer transition"
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition"
                       >
                         <div
                           className="flex items-center gap-2"
@@ -231,7 +230,7 @@ function Home() {
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="w-10 h-10 object-cover rounded shadow-sm"
+                              className="w-12 h-12 object-cover rounded shadow-sm"
                             />
                           )}
                           <span className="text-gray-700 font-medium">{item.name}</span>
@@ -257,9 +256,9 @@ function Home() {
 
       {/* Products Grid */}
       {filteredProducts.length > 0 ? (
-        <>
+        <div className="max-w-7xl mx-auto">
           <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 mt-50 sm:mt-80 lg:mt-50 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
@@ -270,12 +269,12 @@ function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className={`relative cursor-pointer ${i === 0 ? 'mt-2 sm:mt-2' : ''}`}
+                    className="relative cursor-pointer"
                     onClick={() => navigate(`/product/${p._id}`)}
                   >
                     <ProductCard product={p} />
                     {isNew && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
                       </div>
                     )}
@@ -284,7 +283,7 @@ function Home() {
               })}
             </Suspense>
           </div>
-        </>
+        </div>
       ) : (
         !error && <p className="text-center mt-10 text-gray-600">No products found.</p>
       )}
