@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import exclusiveDeals from "../assets/exc.png";
 import trending from "../assets/trendingnow.jpg";
+
 const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
 
 const banners = [
@@ -43,6 +44,7 @@ function Home() {
   const [recentSearches, setRecentSearches] = useState([]);
 
   const navigate = useNavigate();
+  const isMobile = window.innerWidth < 640;
 
   // Load recent searches
   useEffect(() => {
@@ -92,10 +94,8 @@ function Home() {
   const saveRecentSearch = (id) => {
     const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
     if (!product) return;
-
     const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
-    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)];
-    updated = updated.slice(0, 5);
+    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)].slice(0, 5);
     setRecentSearches(updated);
     localStorage.setItem("recentSearches", JSON.stringify(updated));
   };
@@ -108,20 +108,13 @@ function Home() {
       setShowSearch(false);
       return;
     }
-
     try {
       const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
-      if (!res.data.data) {
-        setError("Product does not exist.");
-        setSearchActive(true);
-        setShowSearch(false);
-        return;
-      }
-
+      if (!res.data.data) throw new Error();
       saveRecentSearch(res.data.data.productId);
       setSearchActive(true);
       setShowSearch(false);
-    } catch (err) {
+    } catch {
       setError("Product does not exist.");
       setSearchActive(true);
       setShowSearch(false);
@@ -130,20 +123,14 @@ function Home() {
 
   const handleRecentSearchClick = async (item) => {
     setSearchId(item.id);
-
     try {
       const res = await axios.get(`${BASE_URL}/product/${item.id}`);
-      if (!res.data.data) {
-        setError("Product does not exist.");
-        setSearchActive(true);
-        setShowSearch(false);
-        return;
-      }
+      if (!res.data.data) throw new Error();
       saveRecentSearch(item.id);
       setError("");
       setSearchActive(true);
       setShowSearch(false);
-    } catch (err) {
+    } catch {
       setError("Product does not exist.");
       setSearchActive(true);
       setShowSearch(false);
@@ -171,9 +158,24 @@ function Home() {
   if (loading) return <Loader />;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+    <div className="relative min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 hide-scrollbar">
+
+      {/* Banner */}
+      <div className="relative w-full h-48 sm:h-64 md:h-72 lg:h-80 mb-6 overflow-hidden rounded-2xl shadow-lg">
+        <img
+          src={banners[currentBanner].src}
+          alt={banners[currentBanner].title}
+          className="w-full h-full object-cover transition-all duration-1000"
+        />
+        <div className={`absolute inset-0 bg-gradient-to-r ${banners[currentBanner].gradient} opacity-60`} />
+        <div className="absolute bottom-4 left-4 text-white">
+          <h2 className="text-xl sm:text-2xl font-bold">{banners[currentBanner].title}</h2>
+          <p className="text-sm sm:text-base">{banners[currentBanner].subtitle}</p>
+        </div>
+      </div>
+
       {/* Floating Search */}
-      <div className="fixed top-10 right-6 z-50">
+      <div className="fixed top-6 right-6 z-50">
         <div className="relative">
           <button
             onClick={() => setShowSearch(true)}
@@ -194,7 +196,7 @@ function Home() {
         </div>
       </div>
 
-      {/* Slide-in Search Panel */}
+      {/* Slide-in Search */}
       <AnimatePresence>
         {showSearch && (
           <>
@@ -212,7 +214,6 @@ function Home() {
               transition={{ type: "spring", stiffness: 120, damping: 15 }}
               className="fixed top-0 right-0 w-80 h-full z-50 flex flex-col p-6 backdrop-blur-md bg-white/80 shadow-2xl overflow-y-auto rounded-l-xl hide-scrollbar"
             >
-              {/* Search Form */}
               <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
                 <input
                   type="text"
@@ -230,7 +231,6 @@ function Home() {
                 </button>
               </form>
 
-              {/* Recent Searches */}
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -248,16 +248,9 @@ function Home() {
                         key={item.id}
                         className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
                       >
-                        <div
-                          className="flex items-center gap-2"
-                          onClick={() => handleRecentSearchClick(item)}
-                        >
+                        <div className="flex items-center gap-2" onClick={() => handleRecentSearchClick(item)}>
                           {item.image && (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-8 h-8 object-cover rounded"
-                            />
+                            <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded" />
                           )}
                           <span className="text-gray-700">{item.name}</span>
                         </div>
@@ -278,17 +271,14 @@ function Home() {
         )}
       </AnimatePresence>
 
-      {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
-
-      {/* All Products with NEW badge */}
+      {/* Products */}
       {filteredProducts.length > 0 ? (
         <>
-          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+          <h3 className="text-2xl sm:text-3xl font-bold mb-6 text-center">All Products</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
-                const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
-
+                const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24*60*60*1000;
                 return (
                   <motion.div
                     key={p._id}
@@ -300,7 +290,6 @@ function Home() {
                     onClick={() => navigate(`/product/${p._id}`)}
                   >
                     <ProductCard product={p} />
-
                     {isNew && (
                       <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
@@ -313,7 +302,7 @@ function Home() {
           </div>
         </>
       ) : (
-        !error && <p className="text-center mt-50 text-gray-600">No products found.</p>
+        !error && <p className="text-center mt-10 text-gray-600">No products found.</p>
       )}
 
       <style>{`
