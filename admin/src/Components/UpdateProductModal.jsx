@@ -235,7 +235,7 @@ const UpdateProductModal = ({ product, onClose, onProductUpdated }) => {
           {step < steps.length - 1 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="px-4 py-2 bg-pink-500 text-white rounded-lg"
+              className="px-4 mr-20 py-2 bg-pink-500 text-white rounded-lg"
             >
               Next
             </button>
