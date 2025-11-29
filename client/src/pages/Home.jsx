@@ -293,7 +293,7 @@ function Home() {
       {filteredProducts.length > 0 ? (
         <>
           <h3 className="text-2xl  sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 mt-50 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+          <div className="grid grid-cols-1 mt-50 sm:grid-cols-2 sm:mt-50 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
