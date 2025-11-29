@@ -1,4 +1,4 @@
-// ✨ Ready to paste — UI improved & responsive, no logo on product grid ✨
+// ✨ Ready to paste — Home Page UI improved & responsive, recent searches shown ✨
 import { useEffect, useState, useMemo, Suspense, lazy } from "react";
 import axios from "axios";
 import Loader from "../components/Loader.jsx";
@@ -7,14 +7,13 @@ import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import exclusiveDeals from "../assets/exc.png";
 import trending from "../assets/trendingnow.jpg";
-const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
 
+const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
 const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
 function Home() {
   const [products, setProducts] = useState([]);
   const [searchId, setSearchId] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
@@ -23,7 +22,6 @@ function Home() {
   const [currentBanner, setCurrentBanner] = useState(0);
 
   const navigate = useNavigate();
-  const isMobile = window.innerWidth < 640;
 
   const banners = [
     {
@@ -46,11 +44,13 @@ function Home() {
     },
   ];
 
+  // Load recent searches from localStorage
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(stored);
   }, []);
 
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -63,6 +63,7 @@ function Home() {
     fetchProducts();
   }, []);
 
+  // Banner rotation
   useEffect(() => {
     const timer = setInterval(
       () => setCurrentBanner(prev => (prev + 1) % banners.length),
@@ -71,6 +72,7 @@ function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
@@ -81,6 +83,7 @@ function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Filter products by search
   const filteredProducts = useMemo(() => {
     if (!searchId.trim()) return products;
     return products.filter(p =>
@@ -88,18 +91,38 @@ function Home() {
     );
   }, [products, searchId]);
 
+  const handleSearch = (value) => {
+    setSearchId(value);
+    setSearchActive(true);
+    setShowSearch(false);
+    // Save to recent searches
+    const updatedRecent = [value, ...recentSearches.filter(v => v !== value)].slice(0, 5);
+    setRecentSearches(updatedRecent);
+    localStorage.setItem("recentSearches", JSON.stringify(updatedRecent));
+  };
+
   const clearSearch = () => {
     setSearchId("");
     setSearchActive(false);
-    setError("");
   };
 
   if (loading) return <Loader />;
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* 🔹 Sticky Header with Search */}
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-md flex items-center justify-between px-4 sm:px-6 py-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Smart Buy</h1>
+        <button
+          onClick={() => setShowSearch(true)}
+          className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-md"
+        >
+          <Search size={20} />
+        </button>
+      </div>
+
       {/* 🔹 Banner Slider */}
-      <div className="relative w-full h-52 sm:h-64 md:h-72 overflow-hidden rounded-b-xl shadow">
+      <div className="relative w-full h-52 sm:h-64 md:h-72 overflow-hidden rounded-b-xl shadow mt-3">
         <motion.img
           key={currentBanner}
           src={banners[currentBanner].src}
@@ -120,23 +143,6 @@ function Home() {
           </p>
         </div>
       </div>
-
-      {/* 🔍 Floating Search */}
-      <button
-        onClick={() => setShowSearch(true)}
-        className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-full shadow-lg transition z-50"
-      >
-        <Search size={22} />
-      </button>
-
-      {searchActive && (
-        <button
-          onClick={clearSearch}
-          className="fixed bottom-20 right-6 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 z-50"
-        >
-          <X size={14} />
-        </button>
-      )}
 
       {/* 🔻 Slide Search Drawer */}
       <AnimatePresence>
@@ -159,8 +165,7 @@ function Home() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  setSearchActive(true);
-                  setShowSearch(false);
+                  handleSearch(searchId);
                 }}
                 className="flex gap-3"
               >
@@ -181,8 +186,26 @@ function Home() {
         )}
       </AnimatePresence>
 
+      {/* 🔹 Recent Searches */}
+      {recentSearches.length > 0 && (
+        <div className="px-4 sm:px-6 md:px-10 mt-6">
+          <h4 className="text-gray-700 font-semibold mb-2">Recent Searches:</h4>
+          <div className="flex flex-wrap gap-2">
+            {recentSearches.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSearch(item)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-full text-sm transition"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 🏷️ Section Title */}
-      <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mt-8 mb-6 text-center">
+      <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mt-6 mb-6 text-center">
         Explore Products
       </h3>
 

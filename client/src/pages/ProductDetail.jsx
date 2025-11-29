@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, X, Play, Pause, Mic } from "lucide-react";
-import { useSwipeable } from "react-swipeable"; // ✅ added
+import { useSwipeable } from "react-swipeable";
 
 function ProductDetail() {
   const { id } = useParams();
@@ -49,7 +49,7 @@ function ProductDetail() {
   // Auto-carousel
   useEffect(() => {
     if (!media.length || isHovered || isVideoPlaying) return;
-    const t = setInterval(() => setCurrentIndex((p) => (p + 1) % media.length), 3500);
+    const t = setInterval(() => setCurrentIndex((p) => (p + 1) % media.length), 4000);
     return () => clearInterval(t);
   }, [media, isHovered, isVideoPlaying]);
 
@@ -59,7 +59,7 @@ function ProductDetail() {
     if (!cur) return;
     if (cur.endsWith(".mp4")) {
       const v = videoRef.current;
-      if (v) setTimeout(() => v.play().catch(() => {}), 250);
+      if (v) setTimeout(() => v.play().catch(() => {}), 200);
     } else {
       if (videoRef.current) {
         videoRef.current.pause();
@@ -88,13 +88,12 @@ function ProductDetail() {
       utter.lang = voiceLang;
 
       const voices = synth.getVoices() || [];
-      const female =
+      const voiceMatch =
         voices.find((v) => v.lang === voiceLang && /female/i.test(v.name)) ||
         voices.find((v) => v.lang === voiceLang) ||
-        voices.find((v) => /female/i.test(v.name)) ||
         voices[0];
 
-      if (female) utter.voice = female;
+      if (voiceMatch) utter.voice = voiceMatch;
 
       utter.onstart = () => { setIsSpeaking(true); setIsPaused(false); wasSpeakingBeforeHide.current = true; };
       utter.onend = () => { setIsSpeaking(false); setIsPaused(false); utterRef.current = null; wasSpeakingBeforeHide.current = false; };
@@ -134,7 +133,7 @@ function ProductDetail() {
 
   useEffect(() => stopSpeech, []);
 
-  // ✅ Swipe handlers for mobile
+  // Swipe handlers for mobile
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => setCurrentIndex((p) => (p + 1) % media.length),
     onSwipedRight: () => setCurrentIndex((p) => (p === 0 ? media.length - 1 : p - 1)),
@@ -207,8 +206,8 @@ function ProductDetail() {
 
           {/* Media Carousel */}
           <div
-            {...swipeHandlers} // ✅ apply swipe for mobile
-            className="relative w-full h-[260px] sm:h-[340px] md:h-[420px] bg-gray-100 flex justify-center items-center overflow-hidden rounded-t-2xl"
+            {...swipeHandlers}
+            className="relative w-full h-[280px] sm:h-[380px] md:h-[480px] bg-gray-100 flex justify-center items-center overflow-hidden rounded-t-2xl"
             onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
           >
             {media.length ? (
@@ -224,8 +223,14 @@ function ProductDetail() {
                   >
                     {media[currentIndex].endsWith(".mp4") ? (
                       <video
-                        ref={videoRef} src={media[currentIndex]} muted autoPlay loop playsInline controls
-                        className="w-full h-full object-cover rounded-t-2xl"
+                        ref={videoRef}
+                        src={media[currentIndex]}
+                        muted
+                        autoPlay
+                        loop
+                        playsInline
+                        controls
+                        className="w-full h-full object-contain rounded-t-2xl"
                         onPlay={() => setIsVideoPlaying(true)}
                         onPause={() => setIsVideoPlaying(false)}
                       />
@@ -235,12 +240,16 @@ function ProductDetail() {
                   </motion.div>
                 </AnimatePresence>
 
-                {media.length>1 && (
+                {media.length > 1 && (
                   <>
                     <button onClick={() => setCurrentIndex(p=>p===0?media.length-1:p-1)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md hover:bg-white"><ChevronLeft size={20}/></button>
+                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md hover:bg-white">
+                      <ChevronLeft size={20}/>
+                    </button>
                     <button onClick={() => setCurrentIndex(p=>(p+1)%media.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md hover:bg-white"><ChevronRight size={20}/></button>
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-md hover:bg-white">
+                      <ChevronRight size={20}/>
+                    </button>
                   </>
                 )}
               </>

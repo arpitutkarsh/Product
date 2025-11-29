@@ -14,18 +14,21 @@ const ProductCard = ({ product }) => {
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef(null);
 
+  const isMobile = window.innerWidth < 640;
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoaded(true), 1200);
+    const timer = setTimeout(() => setLoaded(true), 1000);
     return () => clearTimeout(timer);
   }, []);
 
+  // Carousel auto-slide for desktop
   useEffect(() => {
-    if (!media.length || isHovered || isVideoPlaying) return;
+    if (!media.length || isHovered || isVideoPlaying || isMobile) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % media.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [media.length, isHovered, isVideoPlaying]);
+  }, [media.length, isHovered, isVideoPlaying, isMobile]);
 
   const nextSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % media.length); };
   const prevSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1)); };
@@ -76,7 +79,7 @@ const ProductCard = ({ product }) => {
                 >
                   <QRCodeCanvas
                     value={`/product/${product._id}`}
-                    size={120}
+                    size={isMobile ? 100 : 120}
                     level="H"
                   />
                   <p className="text-gray-700 text-sm mt-2 font-medium text-center">
@@ -92,6 +95,7 @@ const ProductCard = ({ product }) => {
                   onEnded={handleVideoPause}
                   controls
                   muted
+                  autoPlay
                   className="w-full h-full object-cover rounded-t-3xl"
                 />
               ) : (
@@ -111,21 +115,17 @@ const ProductCard = ({ product }) => {
         )}
 
         {/* Arrows */}
-        {media.length > 1 && loaded && (
+        {media.length > 1 && loaded && !isMobile && (
           <>
             <button
               onClick={prevSlide}
-              className={`absolute top-1/2 left-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity ${
-                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
-              }`}
+              className={`absolute top-1/2 left-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity`}
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={nextSlide}
-              className={`absolute top-1/2 right-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity ${
-                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
-              }`}
+              className={`absolute top-1/2 right-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity`}
             >
               <ChevronRight size={20} />
             </button>
