@@ -18,11 +18,15 @@ const ProductModal = ({ product, onClose, onProductUpdated, onProductDeleted }) 
     return () => clearInterval(interval);
   }, [product.images]);
 
-  const handleNext = () => setCurrentImage((prev) => (prev + 1) % product.images.length);
-  const handlePrev = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
+  const handleNext = () =>
+    setCurrentImage((prev) => (prev + 1) % product.images.length);
+  const handlePrev = () =>
+    setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
 
   const handleDelete = async () => {
-    if (deleteText.trim().toLowerCase() !== "delete") return alert("Please type 'delete' to confirm.");
+    if (deleteText.trim().toLowerCase() !== "delete")
+      return alert("Please type 'delete' to confirm.");
+
     try {
       const res = await axiosInstance.delete(`/product/delete/${product._id}`);
       if (res.status === 200) {
@@ -46,31 +50,40 @@ const ProductModal = ({ product, onClose, onProductUpdated, onProductDeleted }) 
     );
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center items-center p-4 bg-black/40 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex justify-center items-center p-3 bg-black/50 backdrop-blur-md overflow-y-auto">
+
+      {/* Mobile Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 flex md:hidden bg-white text-gray-900 w-10 h-10 items-center justify-center rounded-full shadow-lg border hover:bg-red-200 transition z-50"
+      >
+        <X size={22} />
+      </button>
+
       <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl relative flex flex-col md:flex-row overflow-hidden animate-slideUpMobile md:animate-fadeInDesktop">
 
-        {/* Media Section */}
-        <div className="w-full md:w-1/2 relative bg-black flex items-center justify-center md:max-h-[80vh] min-h-[250px]">
+        {/* Image Section */}
+        <div className="w-full md:w-1/2 relative bg-black flex items-center justify-center md:max-h-[80vh] min-h-[280px]">
           {product.images?.length > 0 && (
             <img
               src={product.images[currentImage]}
               alt={product.title}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain bg-black"
             />
           )}
 
-          {/* Arrows */}
           {product.images?.length > 1 && (
             <>
               <button
                 onClick={handlePrev}
-                className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 bg-white/30 backdrop-blur-md text-gray-900 p-2 rounded-full hover:bg-white/70 transition"
+                className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 bg-white/40 text-gray-900 p-3 rounded-full hover:bg-white transition"
               >
                 <ChevronLeft size={22} />
               </button>
+
               <button
                 onClick={handleNext}
-                className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 bg-white/30 backdrop-blur-md text-gray-900 p-2 rounded-full hover:bg-white/70 transition"
+                className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 bg-white/40 text-gray-900 p-3 rounded-full hover:bg-white transition"
               >
                 <ChevronRight size={22} />
               </button>
@@ -80,7 +93,12 @@ const ProductModal = ({ product, onClose, onProductUpdated, onProductDeleted }) 
           {/* Dots */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
             {product.images?.map((_, i) => (
-              <span key={i} className={`w-2 h-2 rounded-full ${i === currentImage ? "bg-blue-600" : "bg-gray-400"}`}></span>
+              <span
+                key={i}
+                className={`w-2.5 h-2.5 rounded-full transition ${
+                  i === currentImage ? "bg-blue-500" : "bg-white/60"
+                }`}
+              ></span>
             ))}
           </div>
         </div>
@@ -88,49 +106,48 @@ const ProductModal = ({ product, onClose, onProductUpdated, onProductDeleted }) 
         {/* Content Section */}
         <div className="w-full md:w-1/2 p-6 max-h-[80vh] overflow-y-auto flex flex-col gap-4">
 
-          {/* Close Button Large Screens */}
+          {/* Desktop Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 hidden md:flex bg-white/60 backdrop-blur-md w-10 h-10 items-center justify-center rounded-full shadow-md hover:bg-red-200 transition"
+            className="absolute top-4 right-4 hidden md:flex bg-white text-gray-900 w-10 h-10 items-center justify-center rounded-full shadow-md border hover:bg-red-200 transition"
           >
             <X size={22} />
           </button>
 
-          {/* Title & Description */}
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800">{product.title}</h2>
-          <p className="text-gray-600 whitespace-pre-line">{product.description}</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900">{product.title}</h2>
+          <p className="text-gray-700 leading-relaxed">{product.description}</p>
           <p className="text-sm text-gray-500">
             <b>Category:</b> {product.category?.name || "Uncategorized"}
           </p>
 
           {/* Video */}
           {product.videos?.length > 0 && !removeVideo && (
-            <div>
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-gray-800">Product Video</h3>
                 <button
                   onClick={() => setRemoveVideo(true)}
-                  className="p-1.5 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition"
+                  className="p-2 bg-red-200 text-red-700 rounded-full hover:bg-red-300 transition"
                 >
                   <Minus size={16} />
                 </button>
               </div>
-              <video src={product.videos[0]} controls className="w-full rounded-xl shadow mt-2" />
+              <video src={product.videos[0]} controls className="w-full rounded-xl shadow-lg" />
             </div>
           )}
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-3 flex-wrap">
+          {/* Action Buttons */}
+          <div className="mt-3 flex justify-end gap-3 flex-wrap">
             <button
               onClick={() => setShowUpdateModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition w-full md:w-auto"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow"
             >
               Update
             </button>
 
             <button
               onClick={() => setConfirmDelete(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition w-full md:w-auto"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow"
             >
               Delete
             </button>
@@ -151,7 +168,10 @@ const ProductModal = ({ product, onClose, onProductUpdated, onProductDeleted }) 
               />
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => { setConfirmDelete(false); setDeleteText(""); }}
+                  onClick={() => {
+                    setConfirmDelete(false);
+                    setDeleteText("");
+                  }}
                   className="px-3 py-1 border rounded-lg hover:bg-gray-100"
                 >
                   Cancel
