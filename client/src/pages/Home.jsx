@@ -170,17 +170,6 @@ function Home() {
 
   if (loading) return <Loader />;
 
-  // Framer-motion variants for responsive slide
-  const searchVariants = {
-    hidden: { x: "100%", y: 0 },
-    visible: { x: 0, y: 0 },
-    mobileHidden: { x: 0, y: "100%" },
-    mobileVisible: { x: 0, y: 0 },
-  };
-
-  // Detect mobile width
-  const isMobile = window.innerWidth < 640;
-
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
       {/* Floating Search */}
@@ -217,14 +206,11 @@ function Home() {
               onClick={() => setShowSearch(false)}
             />
             <motion.div
-              initial={isMobile ? "mobileHidden" : "hidden"}
-              animate={isMobile ? "mobileVisible" : "visible"}
-              exit={isMobile ? "mobileHidden" : "hidden"}
-              variants={searchVariants}
-              transition={{ type: "spring", stiffness: 120, damping: 20 }}
-              className={`fixed z-50 flex flex-col p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
-                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
-              `}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
+              className="fixed top-0 right-0 w-80 h-full z-50 flex flex-col p-6 backdrop-blur-md bg-white/80 shadow-2xl overflow-y-auto rounded-l-xl hide-scrollbar"
             >
               {/* Search Form */}
               <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
