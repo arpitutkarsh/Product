@@ -4,30 +4,7 @@ import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import exclusiveDeals from "../assets/exc.png";
-import trending from "../assets/trendingnow.jpg";
 const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
-
-const banners = [
-  {
-    src: "/banners/banner1.jpg",
-    title: "Welcome to Smart Buy",
-    subtitle: "Curated luxury at your fingertips",
-    gradient: "from-purple-600/60 via-pink-400/40 to-yellow-300/30",
-  },
-  {
-    src: exclusiveDeals,
-    title: "Exclusive Deals",
-    subtitle: "Unveil premium discounts today",
-    gradient: "from-green-400/50 via-blue-500/30 to-indigo-500/50",
-  },
-  {
-    src: trending,
-    title: "Trending Now",
-    subtitle: "Discover what’s loved this week",
-    gradient: "from-red-400/50 via-orange-300/30 to-yellow-200/40",
-  },
-];
 
 const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
@@ -38,7 +15,6 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
-  const [currentBanner, setCurrentBanner] = useState(0);
   const [visibleCount, setVisibleCount] = useState(8);
   const [recentSearches, setRecentSearches] = useState([]);
   const navigate = useNavigate();
@@ -65,12 +41,6 @@ function Home() {
     fetchProducts();
   }, []);
 
-  // Banner rotation
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
@@ -92,7 +62,6 @@ function Home() {
   const saveRecentSearch = (id) => {
     const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
     if (!product) return;
-
     const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
     let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)];
     updated = updated.slice(0, 5);
@@ -108,7 +77,6 @@ function Home() {
       setShowSearch(false);
       return;
     }
-
     try {
       const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
       if (!res.data.data) {
@@ -117,7 +85,6 @@ function Home() {
         setShowSearch(false);
         return;
       }
-
       saveRecentSearch(res.data.data.productId);
       setSearchActive(true);
       setShowSearch(false);
@@ -177,25 +144,7 @@ function Home() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 hide-scrollbar pt-16 sm:pt-20 md:pt-24 px-3 sm:px-6 lg:px-8">
-
-      {/* Banner */}
-      <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden mb-6 sm:mb-8 shadow-lg">
-        <img
-          src={banners[currentBanner].src}
-          alt={banners[currentBanner].title}
-          className="w-full h-full object-cover"
-        />
-        <div className={`absolute inset-0 bg-gradient-to-t ${banners[currentBanner].gradient} mix-blend-overlay`} />
-        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 md:p-8">
-          <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg">
-            {banners[currentBanner].title}
-          </h2>
-          <p className="text-white/90 text-sm sm:text-base md:text-lg mt-1 drop-shadow-md">
-            {banners[currentBanner].subtitle}
-          </p>
-        </div>
-      </div>
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 hide-scrollbar pt-4 sm:pt-6 px-3 sm:px-6 lg:px-8">
 
       {/* Floating Search Button */}
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
@@ -314,7 +263,6 @@ function Home() {
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
-
                 return (
                   <motion.div
                     key={p._id}
@@ -322,11 +270,10 @@ function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className={`relative cursor-pointer ${i === 0 && isMobile ? 'mt-2 sm:mt-4' : ''}`}
+                    className={`relative cursor-pointer ${i === 0 ? 'mt-2 sm:mt-2' : ''}`}
                     onClick={() => navigate(`/product/${p._id}`)}
                   >
                     <ProductCard product={p} />
-
                     {isNew && (
                       <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
                         NEW
