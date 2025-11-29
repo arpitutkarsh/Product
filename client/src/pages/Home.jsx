@@ -1,177 +1,341 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo, Suspense, lazy } from "react";
+import axios from "axios";
+import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react";
-import { useSwipeable } from "react-swipeable";
+import { Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import exclusiveDeals from "../assets/exc.png";
+import trending from "../assets/trendingnow.jpg";
+const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
 
-const ProductCard = ({ product }) => {
+const banners = [
+  {
+    src: "/banners/banner1.jpg",
+    title: "Welcome to Smart Buy",
+    subtitle: "Curated luxury at your fingertips",
+    gradient: "from-purple-600/60 via-pink-400/40 to-yellow-300/30",
+  },
+  {
+    src: exclusiveDeals,
+    title: "Exclusive Deals",
+    subtitle: "Unveil premium discounts today",
+    gradient: "from-green-400/50 via-blue-500/30 to-indigo-500/50",
+  },
+  {
+    src: trending,
+    title: "Trending Now",
+    subtitle: "Discover what’s loved this week",
+    gradient: "from-red-400/50 via-orange-300/30 to-yellow-200/40",
+  },
+];
+
+const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
+
+function Home() {
+  const [products, setProducts] = useState([]);
+  const [searchId, setSearchId] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(8);
+  const [recentSearches, setRecentSearches] = useState([]);
+
   const navigate = useNavigate();
-  const media = product.images?.length > 0 ? [...product.images, "QR_CODE"] : ["QR_CODE"];
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const videoRef = useRef(null);
 
-  const isMobile = window.innerWidth < 640;
-
+  // Load recent searches
   useEffect(() => {
-    const timer = setTimeout(() => setLoaded(true), 1000);
-    return () => clearTimeout(timer);
+    const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
+    setRecentSearches(stored);
   }, []);
 
-  // Carousel auto-slide for desktop
+  // Fetch products
   useEffect(() => {
-    if (!media.length || isHovered || isVideoPlaying || isMobile) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % media.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [media.length, isHovered, isVideoPlaying, isMobile]);
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/getAllProduct`);
+        setProducts(res.data.data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
-  const nextSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev + 1) % media.length); };
-  const prevSlide = (e) => { e?.stopPropagation(); setCurrentIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1)); };
-  const handleVideoPlay = () => setIsVideoPlaying(true);
-  const handleVideoPause = () => setIsVideoPlaying(false);
-  const goToProductDetail = () => navigate(`/product/${product._id}`);
+  // Banner rotation
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
+    return () => clearInterval(timer);
+  }, []);
 
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => nextSlide(),
-    onSwipedRight: () => prevSlide(),
-    preventDefaultTouchmoveEvent: true,
-    trackMouse: true,
-  });
+  // Infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+        setVisibleCount(prev => prev + 8);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    if (!searchId.trim()) return products;
+    return products.filter(p =>
+      p.productId?.toLowerCase().includes(searchId.trim().toLowerCase())
+    );
+  }, [products, searchId]);
+
+  const saveRecentSearch = (id) => {
+    const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
+    if (!product) return;
+
+    const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
+    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)];
+    updated = updated.slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!searchId.trim()) {
+      setSearchActive(false);
+      setShowSearch(false);
+      return;
+    }
+
+    try {
+      const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
+      if (!res.data.data) {
+        setError("Product does not exist.");
+        setSearchActive(true);
+        setShowSearch(false);
+        return;
+      }
+
+      saveRecentSearch(res.data.data.productId);
+      setSearchActive(true);
+      setShowSearch(false);
+    } catch (err) {
+      setError("Product does not exist.");
+      setSearchActive(true);
+      setShowSearch(false);
+    }
+  };
+
+  const handleRecentSearchClick = async (item) => {
+    setSearchId(item.id);
+
+    try {
+      const res = await axios.get(`${BASE_URL}/product/${item.id}`);
+      if (!res.data.data) {
+        setError("Product does not exist.");
+        setSearchActive(true);
+        setShowSearch(false);
+        return;
+      }
+      saveRecentSearch(item.id);
+      setError("");
+      setSearchActive(true);
+      setShowSearch(false);
+    } catch (err) {
+      setError("Product does not exist.");
+      setSearchActive(true);
+      setShowSearch(false);
+    }
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem("recentSearches");
+  };
+
+  const removeSingleRecent = (id) => {
+    const updated = recentSearches.filter(item => item.id !== id);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
+
+  const clearSearch = (e) => {
+    e.stopPropagation();
+    setSearchId("");
+    setSearchActive(false);
+    setError("");
+  };
+
+  if (loading) return <Loader />;
+
+  // Framer-motion variants for responsive slide
+  const searchVariants = {
+    hidden: { x: "100%", y: 0 },
+    visible: { x: 0, y: 0 },
+    mobileHidden: { x: 0, y: "100%" },
+    mobileVisible: { x: 0, y: 0 },
+  };
+
+  // Detect mobile width
+  const isMobile = window.innerWidth < 640;
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      onClick={goToProductDetail}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        if (videoRef.current) videoRef.current.pause();
-        setIsVideoPlaying(false);
-      }}
-      className="bg-white/30 backdrop-blur-md border border-white/20 rounded-3xl shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col"
-    >
-      {/* Media Carousel */}
-      <div
-        {...swipeHandlers}
-        className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center"
-      >
-        {!loaded ? (
-          <div className="w-full h-full bg-gray-300 animate-pulse rounded-t-3xl" />
-        ) : media.length > 0 ? (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentIndex}
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex justify-center items-center"
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+      {/* Floating Search */}
+      <div className="fixed top-10 right-6 z-50">
+        <div className="relative">
+          <button
+            onClick={() => setShowSearch(true)}
+            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 rounded-full shadow-xl hover:scale-110 transition transform"
+            title="Search Product"
+          >
+            <Search size={22} />
+          </button>
+          {searchActive && (
+            <button
+              onClick={clearSearch}
+              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition"
+              title="Clear Search"
             >
-              {media[currentIndex] === "QR_CODE" ? (
-                <div
-                  onClick={(e) => { e.stopPropagation(); goToProductDetail(); }}
-                  className="flex flex-col items-center justify-center p-4 bg-white/40 backdrop-blur-lg rounded-xl shadow-md border border-white/30"
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Slide-in Search Panel */}
+      <AnimatePresence>
+        {showSearch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.2 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-40"
+              onClick={() => setShowSearch(false)}
+            />
+            <motion.div
+              initial={isMobile ? "mobileHidden" : "hidden"}
+              animate={isMobile ? "mobileVisible" : "visible"}
+              exit={isMobile ? "mobileHidden" : "hidden"}
+              variants={searchVariants}
+              transition={{ type: "spring", stiffness: 120, damping: 20 }}
+              className={`fixed z-50 flex flex-col p-6 backdrop-blur-md bg-white/90 shadow-2xl overflow-y-auto hide-scrollbar
+                ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
+              `}
+            >
+              {/* Search Form */}
+              <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
+                <input
+                  type="text"
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  placeholder="Search by Product ID..."
+                  className="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
                 >
-                  <QRCodeCanvas
-                    value={`/product/${product._id}`}
-                    size={isMobile ? 100 : 120}
-                    level="H"
-                  />
-                  <p className="text-gray-700 text-sm mt-2 font-medium text-center">
-                    Scan to view
-                  </p>
+                  Search
+                </button>
+              </form>
+
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold text-gray-700">Recent Searches</h4>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-red-500 text-sm hover:underline"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <ul className="flex flex-col gap-2">
+                    {recentSearches.map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
+                      >
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={() => handleRecentSearchClick(item)}
+                        >
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          )}
+                          <span className="text-gray-700">{item.name}</span>
+                        </div>
+                        <button
+                          onClick={() => removeSingleRecent(item.id)}
+                          className="text-red-500 hover:text-red-700"
+                          title="Remove"
+                        >
+                          <X size={16} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              ) : media[currentIndex].endsWith(".mp4") ? (
-                <video
-                  ref={videoRef}
-                  src={media[currentIndex]}
-                  onPlay={handleVideoPlay}
-                  onPause={handleVideoPause}
-                  onEnded={handleVideoPause}
-                  controls
-                  muted
-                  autoPlay
-                  className="w-full h-full object-cover rounded-t-3xl"
-                />
-              ) : (
-                <img
-                  src={media[currentIndex]}
-                  alt={product.title}
-                  className="w-full h-full object-cover rounded-t-3xl"
-                />
               )}
             </motion.div>
-          </AnimatePresence>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-            <ImageOff size={40} />
-            <span className="text-sm mt-2">No Media</span>
-          </div>
-        )}
-
-        {/* Arrows */}
-        {media.length > 1 && loaded && !isMobile && (
-          <>
-            <button
-              onClick={prevSlide}
-              className={`absolute top-1/2 left-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity`}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={nextSlide}
-              className={`absolute top-1/2 right-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity`}
-            >
-              <ChevronRight size={20} />
-            </button>
           </>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Product Info */}
-      <div className="p-4 flex flex-col flex-grow justify-between">
-        {!loaded ? (
-          <div className="space-y-2">
-            <div className="h-5 bg-gray-300 rounded w-3/4 mx-auto animate-pulse" />
-            <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto animate-pulse" />
-            <div className="h-3 bg-gray-300 rounded w-full mx-auto animate-pulse mt-2" />
+      {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
+
+      {/* All Products with NEW badge */}
+      {filteredProducts.length > 0 ? (
+        <>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+            <Suspense fallback={<Loader />}>
+              {filteredProducts.slice(0, visibleCount).map((p, i) => {
+                const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
+
+                return (
+                  <motion.div
+                    key={p._id}
+                    whileHover={{ scale: 1.03 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="relative cursor-pointer"
+                    onClick={() => navigate(`/product/${p._id}`)}
+                  >
+                    <ProductCard product={p} />
+
+                    {isNew && (
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
+                        NEW
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </Suspense>
           </div>
-        ) : (
-          <>
-            <h3 className="font-bold text-lg md:text-xl text-gray-900 text-center truncate">
-              {product.title}
-            </h3>
-            <p className="text-sm md:text-base text-gray-600 text-center mt-1">
-              {product.category?.name || "Uncategorized"}
-            </p>
-            <p className="text-gray-500 text-sm mt-2 line-clamp-2 text-center">
-              {product.description || "No description available."}
-            </p>
-            <p className="text-gray-800 text-sm font-mono text-center mt-3">
-              Product ID: <span className="font-semibold">{product.productId}</span>
-            </p>
-            {product.link && (
-              <a
-                href={product.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-3 hover:underline hover:text-pink-500 transition"
-              >
-                <ExternalLink size={14} />
-                View Product
-              </a>
-            )}
-          </>
-        )}
-      </div>
-    </motion.div>
+        </>
+      ) : (
+        !error && <p className="text-center mt-50 text-gray-600">No products found.</p>
+      )}
+
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </div>
   );
-};
+}
 
-export default ProductCard;
+export default Home;
