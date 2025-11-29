@@ -1,4 +1,4 @@
-// ✨ Ready to paste — UI improved only ✨
+// ✨ Ready to paste — UI improved & responsive, no logo on product grid ✨
 import { useEffect, useState, useMemo, Suspense, lazy } from "react";
 import axios from "axios";
 import Loader from "../components/Loader.jsx";
@@ -20,6 +20,7 @@ function Home() {
   const [searchActive, setSearchActive] = useState(false);
   const [visibleCount, setVisibleCount] = useState(8);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [currentBanner, setCurrentBanner] = useState(0);
 
   const navigate = useNavigate();
   const isMobile = window.innerWidth < 640;
@@ -45,8 +46,6 @@ function Home() {
     },
   ];
 
-  const [currentBanner, setCurrentBanner] = useState(0);
-
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(stored);
@@ -64,9 +63,13 @@ function Home() {
     fetchProducts();
   }, []);
 
-  useEffect(() =>
-    setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 4000),
-  []);
+  useEffect(() => {
+    const timer = setInterval(
+      () => setCurrentBanner(prev => (prev + 1) % banners.length),
+      4000
+    );
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,7 +98,6 @@ function Home() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      
       {/* 🔹 Banner Slider */}
       <div className="relative w-full h-52 sm:h-64 md:h-72 overflow-hidden rounded-b-xl shadow">
         <motion.img
@@ -110,7 +112,7 @@ function Home() {
           className={`absolute inset-0 bg-gradient-to-r ${banners[currentBanner].gradient}`}
         />
         <div className="absolute left-6 bottom-6 text-white">
-          <h2 className="text-xl sm:text-2xl font-bold drop-shadow-lg">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-lg">
             {banners[currentBanner].title}
           </h2>
           <p className="text-sm sm:text-base opacity-90">
@@ -124,9 +126,9 @@ function Home() {
         onClick={() => setShowSearch(true)}
         className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-full shadow-lg transition z-50"
       >
-        <Search />
+        <Search size={22} />
       </button>
-      
+
       {searchActive && (
         <button
           onClick={clearSearch}
@@ -147,7 +149,6 @@ function Home() {
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black z-40"
             />
-
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
@@ -181,17 +182,20 @@ function Home() {
       </AnimatePresence>
 
       {/* 🏷️ Section Title */}
-      <h3 className="text-2xl font-bold text-gray-900 mt-8 mb-4 text-center">
+      <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mt-8 mb-6 text-center">
         Explore Products
       </h3>
 
       {/* 🛍 Product Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 px-4 pb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-4 sm:px-6 md:px-10 pb-12">
         <Suspense fallback={<Loader />}>
           {filteredProducts.slice(0, visibleCount).map((p, i) => (
             <motion.div
               key={p._id}
               whileHover={{ scale: 1.03 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
               className="bg-white rounded-2xl shadow hover:shadow-xl transition p-3 cursor-pointer"
               onClick={() => navigate(`/product/${p._id}`)}
             >
