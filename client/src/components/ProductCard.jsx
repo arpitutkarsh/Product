@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, ImageOff } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { useSwipeable } from "react-swipeable"; // ✅ added
+import { useSwipeable } from "react-swipeable";
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
-
   const media = product.images?.length > 0 ? [...product.images, "QR_CODE"] : ["QR_CODE"];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -34,17 +33,16 @@ const ProductCard = ({ product }) => {
   const handleVideoPause = () => setIsVideoPlaying(false);
   const goToProductDetail = () => navigate(`/product/${product._id}`);
 
-  // ✅ Swipe handlers
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => nextSlide(),
     onSwipedRight: () => prevSlide(),
     preventDefaultTouchmoveEvent: true,
-    trackMouse: true, // allows dragging on desktop
+    trackMouse: true,
   });
 
   return (
     <motion.div
-      whileHover={{ scale: 1.05 }}
+      whileHover={{ scale: 1.03 }}
       onClick={goToProductDetail}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
@@ -52,12 +50,12 @@ const ProductCard = ({ product }) => {
         if (videoRef.current) videoRef.current.pause();
         setIsVideoPlaying(false);
       }}
-      className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl shadow-xl hover:shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col relative"
+      className="bg-white/30 backdrop-blur-md border border-white/20 rounded-3xl shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col"
     >
       {/* Media Carousel */}
       <div
-        {...swipeHandlers} // ✅ apply swipe handlers
-        className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl"
+        {...swipeHandlers}
+        className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center"
       >
         {!loaded ? (
           <div className="w-full h-full bg-gray-300 animate-pulse rounded-t-3xl" />
@@ -74,7 +72,7 @@ const ProductCard = ({ product }) => {
               {media[currentIndex] === "QR_CODE" ? (
                 <div
                   onClick={(e) => { e.stopPropagation(); goToProductDetail(); }}
-                  className="flex flex-col items-center justify-center p-4 bg-white/30 backdrop-blur-xl rounded-xl shadow-lg border border-white/40 cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-white/40 backdrop-blur-lg rounded-xl shadow-md border border-white/30"
                 >
                   <QRCodeCanvas
                     value={`/product/${product._id}`}
@@ -82,7 +80,7 @@ const ProductCard = ({ product }) => {
                     level="H"
                   />
                   <p className="text-gray-700 text-sm mt-2 font-medium text-center">
-                    Scan to view product
+                    Scan to view
                   </p>
                 </div>
               ) : media[currentIndex].endsWith(".mp4") ? (
@@ -108,25 +106,25 @@ const ProductCard = ({ product }) => {
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
             <ImageOff size={40} />
-            <span className="text-sm mt-2">No Media Available</span>
+            <span className="text-sm mt-2">No Media</span>
           </div>
         )}
 
-        {/* Navigation Arrows */}
+        {/* Arrows */}
         {media.length > 1 && loaded && (
           <>
             <button
               onClick={prevSlide}
-              className={`absolute top-1/2 left-3 -translate-y-1/2 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 text-white p-2 rounded-full shadow-lg transition transform ${
-                isHovered ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+              className={`absolute top-1/2 left-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity ${
+                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={nextSlide}
-              className={`absolute top-1/2 right-3 -translate-y-1/2 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 text-white p-2 rounded-full shadow-lg transition transform ${
-                isHovered ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+              className={`absolute top-1/2 right-3 -translate-y-1/2 bg-purple-500/70 hover:bg-purple-600 text-white p-2 rounded-full shadow transition-opacity ${
+                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}
             >
               <ChevronRight size={20} />
@@ -142,9 +140,6 @@ const ProductCard = ({ product }) => {
             <div className="h-5 bg-gray-300 rounded w-3/4 mx-auto animate-pulse" />
             <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto animate-pulse" />
             <div className="h-3 bg-gray-300 rounded w-full mx-auto animate-pulse mt-2" />
-            <div className="h-3 bg-gray-300 rounded w-full mx-auto animate-pulse mt-1" />
-            <div className="h-4 bg-gray-300 rounded w-2/3 mx-auto animate-pulse mt-3" />
-            <div className="h-4 bg-gray-300 rounded w-1/3 mx-auto animate-pulse mt-1" />
           </div>
         ) : (
           <>
