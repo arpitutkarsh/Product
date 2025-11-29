@@ -170,7 +170,6 @@ function Home() {
 
   if (loading) return <Loader />;
 
-  // Framer-motion variants for responsive slide
   const searchVariants = {
     hidden: { x: "100%", y: 0 },
     visible: { x: 0, y: 0 },
@@ -178,11 +177,10 @@ function Home() {
     mobileVisible: { x: 0, y: 0 },
   };
 
-  // Detect mobile width
   const isMobile = window.innerWidth < 640;
 
   return (
-    <div className="relative mt-20 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar">
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar" style={{ paddingTop: "6rem" }}>
       {/* Floating Search */}
       <div className="fixed top-10 right-6 z-50">
         <div className="relative">
@@ -226,7 +224,6 @@ function Home() {
                 ${isMobile ? "w-full h-3/4 bottom-0 left-0 rounded-t-xl" : "top-0 right-0 w-80 h-full rounded-l-xl"}
               `}
             >
-              {/* Search Form */}
               <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
                 <input
                   type="text"
@@ -244,7 +241,6 @@ function Home() {
                 </button>
               </form>
 
-              {/* Recent Searches */}
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -294,7 +290,6 @@ function Home() {
 
       {error && <p className="text-red-500 text-center mb-4 mt-4 animate-pulse">{error}</p>}
 
-      {/* All Products with NEW badge */}
       {filteredProducts.length > 0 ? (
         <>
           <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
