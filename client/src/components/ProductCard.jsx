@@ -1,4 +1,4 @@
-// ProductCard.jsx — Ready to paste
+// ProductCard.jsx — Responsive version
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +16,10 @@ const ProductCard = ({ product }) => {
   const videoRef = useRef(null);
   const isMobile = window.innerWidth < 640;
 
-  useEffect(() => { const timer = setTimeout(() => setLoaded(true), 500); return () => clearTimeout(timer); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoaded(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!media.length || isHovered || isVideoPlaying || isMobile) return;
@@ -46,7 +49,7 @@ const ProductCard = ({ product }) => {
       className="bg-white/30 backdrop-blur-md border border-white/20 rounded-3xl shadow-lg hover:shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col"
     >
       {/* Media */}
-      <div {...swipeHandlers} className="relative w-full h-64 md:h-72 lg:h-80 bg-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center">
+      <div {...swipeHandlers} className="relative w-full h-60 sm:h-64 md:h-72 lg:h-80 xl:h-96 bg-gray-100 overflow-hidden rounded-t-3xl flex items-center justify-center">
         {!loaded ? (
           <div className="w-full h-full bg-gray-300 animate-pulse rounded-t-3xl" />
         ) : media.length > 0 ? (
@@ -93,7 +96,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Product Info */}
-      <div className="p-4 flex flex-col flex-grow justify-between">
+      <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-grow justify-between">
         {!loaded ? (
           <div className="space-y-2">
             <div className="h-5 bg-gray-300 rounded w-3/4 mx-auto animate-pulse" />
@@ -102,13 +105,13 @@ const ProductCard = ({ product }) => {
           </div>
         ) : (
           <>
-            <h3 className="font-bold text-lg md:text-xl text-gray-900 text-center truncate">{product.title || "Untitled Product"}</h3>
-            <p className="text-sm md:text-base text-gray-600 text-center mt-1">{product.category?.name || "Uncategorized"}</p>
-            <p className="text-gray-500 text-sm mt-2 line-clamp-2 text-center">{product.description || "No description available."}</p>
-            <p className="text-gray-800 text-sm font-mono text-center mt-3">Product ID: <span className="font-semibold">{product.productId || "N/A"}</span></p>
+            <h3 className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-gray-900 text-center truncate">{product.title || "Untitled Product"}</h3>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600 text-center mt-1">{product.category?.name || "Uncategorized"}</p>
+            <p className="text-gray-500 text-xs sm:text-sm md:text-base mt-2 line-clamp-3 text-center">{product.description || "No description available."}</p>
+            <p className="text-gray-800 text-xs sm:text-sm md:text-sm font-mono text-center mt-3">Product ID: <span className="font-semibold">{product.productId || "N/A"}</span></p>
             {product.link && (
               <a href={product.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-3 hover:underline hover:text-pink-500 transition">
+                className="flex items-center justify-center gap-1 text-purple-600 font-medium text-xs sm:text-sm md:text-sm mt-3 hover:underline hover:text-pink-500 transition">
                 <ExternalLink size={14} /> View Product
               </a>
             )}
