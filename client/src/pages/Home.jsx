@@ -10,23 +10,7 @@ const ProductCard = lazy(() =>
   import("../components/ProductCard.jsx")
 );
 
-const banners = [
-  {
-    src: "/banners/banner1.jpg",
-    title: "Welcome to Smart Buy",
-    subtitle: "Curated luxury at your fingertips",
-  },
-  {
-    src: exclusiveDeals,
-    title: "Exclusive Deals",
-    subtitle: "Unveil premium discounts today",
-  },
-  {
-    src: trending,
-    title: "Trending Now",
-    subtitle: "Discover what’s loved this week",
-  },
-];
+
 
 const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
