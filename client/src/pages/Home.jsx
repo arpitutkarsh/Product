@@ -44,11 +44,13 @@ function Home() {
 
   const navigate = useNavigate();
 
+  // Load recent searches
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(stored);
   }, []);
 
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -63,11 +65,13 @@ function Home() {
     fetchProducts();
   }, []);
 
+  // Banner rotation
   useEffect(() => {
     const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
     return () => clearInterval(timer);
   }, []);
 
+  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
@@ -176,7 +180,7 @@ function Home() {
   const isMobile = window.innerWidth < 640;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar mt-24">
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 hide-scrollbar" style={{ paddingTop: "6rem" }}>
       {/* Floating Search */}
       <div className="fixed top-10 right-6 z-50">
         <div className="relative">
@@ -289,7 +293,7 @@ function Home() {
       {filteredProducts.length > 0 ? (
         <>
           <h3 className="text-2xl  sm:text-3xl font-bold text-gray-800 mt-30 mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 mt-100 sm:grid-cols-2 sm:mt-100 md:mt-100 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
+          <div className="grid grid-cols-1 mt-50 sm:grid-cols-2 sm:mt-50 md:mt-70 md:grid-cols-3 lg:grid-cols-4 gap-6 hide-scrollbar">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24 * 60 * 60 * 1000;
