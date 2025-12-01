@@ -57,15 +57,6 @@ function Home() {
     );
   }, [products, searchId]);
 
-  const saveRecentSearch = (id) => {
-    const product = products.find(p => p.productId?.toLowerCase() === id.toLowerCase());
-    if (!product) return;
-    const newEntry = { id: product.productId, name: product.title, image: product.images?.[0] || null };
-    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)].slice(0, 5);
-    setRecentSearches(updated);
-    localStorage.setItem("recentSearches", JSON.stringify(updated));
-  };
-
   const handleSearch = async (e) => {
     e.preventDefault();
     setError("");
@@ -77,7 +68,6 @@ function Home() {
     try {
       const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
       if (!res.data.data) throw new Error();
-      saveRecentSearch(res.data.data.productId);
       setSearchActive(true);
       setShowSearch(false);
     } catch {
@@ -97,30 +87,27 @@ function Home() {
   if (loading) return <Loader />;
 
   return (
-    <div className="relative min-h-screen bg-gray-50 px-4 sm:px-8 py-8 hide-scrollbar">
+    <div className="relative min-h-screen bg-gray-50 px-4 sm:px-8 pt-28 pb-10 hide-scrollbar">
+      {/* ⬆️ NOTE: Changed from py-8 to pt-28 pb-10 to prevent overlap */}
 
       {/* Floating Search Button */}
-      <div className="fixed top-6 right-6 z-50">
-        <div className="relative">
-          <button
-            onClick={() => setShowSearch(true)}
-            className="bg-blue-600 text-white p-3 rounded-full shadow-xl hover:scale-105 transition-transform"
-          >
-            <Search size={22} />
-          </button>
+      <button
+        onClick={() => setShowSearch(true)}
+        className="fixed top-6 right-6 z-50 bg-blue-600 text-white p-3 rounded-full shadow-xl hover:scale-105 transition-transform"
+      >
+        <Search size={22} />
+      </button>
 
-          {searchActive && (
-            <button
-              onClick={clearSearch}
-              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 shadow"
-            >
-              <X size={12} />
-            </button>
-          )}
-        </div>
-      </div>
+      {searchActive && (
+        <button
+          onClick={clearSearch}
+          className="fixed top-6 right-20 bg-red-600 text-white p-2 rounded-full z-50 shadow-sm"
+        >
+          <X size={16} />
+        </button>
+      )}
 
-      {/* Slide Search */}
+      {/* Slide Search Panel */}
       <AnimatePresence>
         {showSearch && (
           <>
