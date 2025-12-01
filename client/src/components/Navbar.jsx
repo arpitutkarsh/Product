@@ -45,7 +45,7 @@ function Navbar() {
               h-14 w-14 md:h-16 md:w-16
               flex items-center justify-center
               rounded-2xl
-              bg-gradient-to-br from-pink-400 via-purple-500 to-blue-500
+              
               shadow-lg
               transition-all duration-300 hover:shadow-2xl
             "
