@@ -4,13 +4,12 @@ import logo from "../assets/Logo.png";
 
 function Navbar() {
   const navigate = useNavigate();
-  const [isAtTop, setIsAtTop] = useState(true); // ⭐ Track scroll position
+  const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsAtTop(window.scrollY < 50); // Show navbar only if scroll is near top
+      setIsAtTop(window.scrollY < 50);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -19,69 +18,64 @@ function Navbar() {
     <nav
       className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 w-full flex justify-center transition-all duration-500 ${
         isAtTop ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`} // ⭐ Smooth hide/show with opacity
+      }`}
     >
       <div
         className="
           w-[90%] md:w-[90%] lg:w-[100%]
-          mb-4
-          px-8 py-4
-          bg-white/30
-          backdrop-blur-xl
-          border border-white/40
-          shadow-[0_8px_30px_rgb(0,0,0,0.12)]
+          px-6 md:px-12 py-3
+          bg-white/20
+          backdrop-blur-2xl
+          border border-white/30
           rounded-full
           flex items-center justify-between
-          transition-all duration-300
-          hover:shadow-[0_8px_40px_rgb(0,0,0,0.2)]
-          hover:bg-white/40
+          shadow-lg
+          transition-all duration-500
+          hover:shadow-2xl
         "
       >
         {/* Logo + Brand */}
         <div
-          className="
-            flex items-center gap-3 cursor-pointer 
-            transition-all duration-300 
-            hover:scale-105
-          "
+          className="flex items-center gap-4 cursor-pointer transition-all duration-300 hover:scale-105"
           onClick={() => navigate("/")}
         >
-          {/* Glassmorphic Logo Wrapper */}
+          {/* Logo Wrapper */}
           <div
             className="
-              h-12 w-12
+              h-14 w-14 md:h-16 md:w-16
               flex items-center justify-center
-              rounded-xl
-              bg-white/30
-              backdrop-blur-xl
-              border border-white/40
-              shadow-[0_4px_20px_rgb(0,0,0,0.15)]
-              transition-all duration-300
-              hover:shadow-[0_4px_25px_rgba(255,255,255,0.6)]
+              rounded-2xl
+              bg-gradient-to-br from-pink-400 via-purple-500 to-blue-500
+              shadow-lg
+              transition-all duration-300 hover:shadow-2xl
             "
           >
             <img
               src={logo}
-              alt="Client Logo"
-              className="h-10 w-10 object-contain select-none"
+              alt="Logo"
+              className="h-10 w-10 md:h-12 md:w-12 object-contain select-none"
             />
           </div>
 
           <span
             className="
-            hidden md:block text-gray-800
-            font-semibold tracking-wide text-xl
-          "
+              hidden md:block
+              text-gray-50
+              font-bold text-2xl md:text-3xl
+              tracking-wider
+              drop-shadow-md
+            "
           >
             Smart Buy
           </span>
         </div>
 
-        {/* Tagline Section */}
-        <div className="hidden md:flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_4px_rgba(59,130,246,0.5)]"></span>
-
-          <span className="text-gray-600 font-medium text-sm tracking-wide"></span>
+        {/* Optional Tagline or Accent */}
+        <div className="hidden md:flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-400 via-purple-500 to-blue-500 shadow-lg animate-pulse"></span>
+          <span className="text-gray-100 font-medium text-sm tracking-wide select-none">
+            Luxury Shopping Made Simple
+          </span>
         </div>
       </div>
     </nav>
