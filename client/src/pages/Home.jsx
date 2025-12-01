@@ -102,6 +102,12 @@ function Home() {
 
   if (loading) return <Loader />;
 
+  const isNewProduct = (createdAt) => {
+    if (!createdAt) return false;
+    const ONE_DAY = 24 * 60 * 60 * 1000; // 24 hours in ms
+    return (Date.now() - new Date(createdAt).getTime()) <= ONE_DAY;
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-50 px-4 sm:px-8 pt-28 pb-10 hide-scrollbar">
 
@@ -201,9 +207,15 @@ function Home() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="cursor-pointer"
+                className="relative cursor-pointer"
                 onClick={() => navigate(`/product/${p._id}`)}
               >
+                {/* NEW badge */}
+                {isNewProduct(p.createdAt) && (
+                  <div className="absolute top-2 left-2 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse z-10">
+                    NEW
+                  </div>
+                )}
                 <ProductCard product={p} />
               </motion.div>
             ))}
