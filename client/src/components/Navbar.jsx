@@ -60,7 +60,7 @@ function Navbar() {
           <span
             className="
               hidden md:block
-              text-gray-50
+              text-black
               font-bold text-2xl md:text-3xl
               tracking-wider
               drop-shadow-md
@@ -73,7 +73,7 @@ function Navbar() {
         {/* Optional Tagline or Accent */}
         <div className="hidden md:flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-400 via-purple-500 to-blue-500 shadow-lg animate-pulse"></span>
-          <span className="text-black ml-40 font-medium text-sm tracking-wide select-none">
+          <span className="text-black mr-40 font-medium text-sm tracking-wide select-none">
             Shopping Made Simple
           </span>
         </div>
