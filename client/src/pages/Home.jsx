@@ -20,6 +20,7 @@ function Home() {
   const [recentSearches, setRecentSearches] = useState([]);
 
   const navigate = useNavigate();
+  const isMobile = window.innerWidth < 640;
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
@@ -57,6 +58,13 @@ function Home() {
     );
   }, [products, searchId]);
 
+  const saveRecentSearch = (id, name, image) => {
+    const newEntry = { id, name, image };
+    let updated = [newEntry, ...recentSearches.filter(s => s.id !== newEntry.id)].slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setError("");
@@ -68,6 +76,8 @@ function Home() {
     try {
       const res = await axios.get(`${BASE_URL}/product/${searchId.trim()}`);
       if (!res.data.data) throw new Error();
+      const product = res.data.data;
+      saveRecentSearch(product.productId, product.title, product.images?.[0] || null);
       setSearchActive(true);
       setShowSearch(false);
     } catch {
@@ -77,8 +87,14 @@ function Home() {
     }
   };
 
-  const clearSearch = (e) => {
-    e.stopPropagation();
+  const handleRecentSearchClick = (item) => {
+    setSearchId(item.id);
+    saveRecentSearch(item.id, item.name, item.image);
+    setSearchActive(true);
+    setShowSearch(false);
+  };
+
+  const clearSearch = () => {
     setSearchId("");
     setSearchActive(false);
     setError("");
@@ -88,12 +104,11 @@ function Home() {
 
   return (
     <div className="relative min-h-screen bg-gray-50 px-4 sm:px-8 pt-28 pb-10 hide-scrollbar">
-      {/* ⬆️ NOTE: Changed from py-8 to pt-28 pb-10 to prevent overlap */}
 
-      {/* Floating Search Button */}
+      {/* Gradient Search Button */}
       <button
         onClick={() => setShowSearch(true)}
-        className="fixed top-6 right-6 z-50 bg-blue-600 text-white p-3 rounded-full shadow-xl hover:scale-105 transition-transform"
+        className="fixed top-6 right-6 z-50 p-3 rounded-full shadow-xl hover:scale-105 transition-transform bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white"
       >
         <Search size={22} />
       </button>
@@ -119,11 +134,11 @@ function Home() {
               onClick={() => setShowSearch(false)}
             />
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              initial={isMobile ? { y: "100%" } : { x: "100%" }}
+              animate={isMobile ? { y: 0 } : { x: 0 }}
+              exit={isMobile ? { y: "100%" } : { x: "100%" }}
               transition={{ type: "spring", stiffness: 120, damping: 15 }}
-              className="fixed top-0 right-0 w-80 h-full z-50 p-6 bg-white shadow-xl overflow-y-auto rounded-l-2xl"
+              className={`fixed z-50 ${isMobile ? "bottom-0 w-full h-3/4 rounded-t-2xl" : "top-0 right-0 w-80 h-full rounded-l-2xl"} p-6 bg-white shadow-xl overflow-y-auto`}
             >
               <form onSubmit={handleSearch} className="flex gap-2 mb-6">
                 <input
@@ -136,6 +151,37 @@ function Home() {
                 />
                 <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Go</button>
               </form>
+
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div>
+                  <h4 className="text-lg font-semibold mb-2 text-gray-700">Recent Searches</h4>
+                  <ul className="flex flex-col gap-3">
+                    {recentSearches.map(item => (
+                      <li
+                        key={item.id}
+                        onClick={() => handleRecentSearchClick(item)}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+                      >
+                        {item.image && (
+                          <img src={item.image} alt={item.name} className="w-10 h-10 rounded-md object-cover" />
+                        )}
+                        <span className="text-gray-800 font-medium">{item.name}</span>
+                        <X
+                          size={16}
+                          className="ml-auto text-red-500 hover:text-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const updated = recentSearches.filter(s => s.id !== item.id);
+                            setRecentSearches(updated);
+                            localStorage.setItem("recentSearches", JSON.stringify(updated));
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -147,7 +193,7 @@ function Home() {
       </h3>
 
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-16">
           <Suspense fallback={<Loader />}>
             {filteredProducts.slice(0, visibleCount).map((p, i) => (
               <motion.div
