@@ -196,86 +196,11 @@ function Home() {
         </div>
       </div>
 
-      {/* Slide-in Search */}
-      <AnimatePresence>
-        {showSearch && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.2 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-40"
-              onClick={() => setShowSearch(false)}
-            />
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 120, damping: 15 }}
-              className="fixed top-0 right-0 w-80 h-full z-50 flex flex-col p-6 backdrop-blur-md bg-white/80 shadow-2xl overflow-y-auto rounded-l-xl hide-scrollbar"
-            >
-              <form onSubmit={handleSearch} className="flex items-center gap-2 mb-4">
-                <input
-                  type="text"
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
-                  placeholder="Search by Product ID..."
-                  className="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition"
-                >
-                  Search
-                </button>
-              </form>
-
-              {recentSearches.length > 0 && (
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold text-gray-700">Recent Searches</h4>
-                    <button
-                      onClick={clearRecentSearches}
-                      className="text-red-500 text-sm hover:underline"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                  <ul className="flex flex-col gap-2">
-                    {recentSearches.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2" onClick={() => handleRecentSearchClick(item)}>
-                          {item.image && (
-                            <img src={item.image} alt={item.name} className="w-8 h-8 object-cover rounded" />
-                          )}
-                          <span className="text-gray-700">{item.name}</span>
-                        </div>
-                        <button
-                          onClick={() => removeSingleRecent(item.id)}
-                          className="text-red-500 hover:text-red-700"
-                          title="Remove"
-                        >
-                          <X size={16} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* Products */}
       {filteredProducts.length > 0 ? (
         <>
-          <h3 className="text-2xl sm:text-3xl font-bold mb-6 text-center">All Products</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <h3 className="text-2xl sm:text-3xl font-bold mb-6 mt-16 sm:mt-0 text-center">All Products</h3>
+          <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2">
             <Suspense fallback={<Loader />}>
               {filteredProducts.slice(0, visibleCount).map((p, i) => {
                 const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24*60*60*1000;
