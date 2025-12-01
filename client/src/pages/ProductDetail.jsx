@@ -72,7 +72,6 @@ function ProductDetail() {
   // Voice synthesis
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
-    const synth = synthRef.current;
     const ensureVoices = () => {};
     window.addEventListener("voiceschanged", ensureVoices);
     return () => window.removeEventListener("voiceschanged", ensureVoices);
@@ -147,7 +146,7 @@ function ProductDetail() {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-3 md:px-6"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 px-3 md:px-6 pt-safe"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={() => { stopSpeech(); navigate(-1); }}
       >
@@ -156,7 +155,7 @@ function ProductDetail() {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: "spring", stiffness: 140, damping: 18 }}
-          className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto hide-scrollbar"
+          className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-y-auto hide-scrollbar mt-safe"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Top Controls */}
@@ -273,6 +272,15 @@ function ProductDetail() {
           </div>
 
           <style>{`
+            :root {
+              --safe-area-top: env(safe-area-inset-top, 16px);
+            }
+            .pt-safe {
+              padding-top: var(--safe-area-top);
+            }
+            .mt-safe {
+              margin-top: var(--safe-area-top);
+            }
             @keyframes wave {
               0% { transform: scaleY(0.4); opacity:0.6; }
               50% { transform: scaleY(1); opacity:1; }

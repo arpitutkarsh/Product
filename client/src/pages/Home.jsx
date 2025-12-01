@@ -4,31 +4,8 @@ import Loader from "../components/Loader.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import exclusiveDeals from "../assets/exc.png";
-import trending from "../assets/trendingnow.jpg";
 
 const ProductCard = lazy(() => import("../components/ProductCard.jsx"));
-
-const banners = [
-  {
-    src: "/banners/banner1.jpg",
-    title: "Welcome to Smart Buy",
-    subtitle: "Curated luxury at your fingertips",
-    gradient: "from-purple-600/60 via-pink-400/40 to-yellow-300/30",
-  },
-  {
-    src: exclusiveDeals,
-    title: "Exclusive Deals",
-    subtitle: "Unveil premium discounts today",
-    gradient: "from-green-400/50 via-blue-500/30 to-indigo-500/50",
-  },
-  {
-    src: trending,
-    title: "Trending Now",
-    subtitle: "Discover what’s loved this week",
-    gradient: "from-red-400/50 via-orange-300/30 to-yellow-200/40",
-  },
-];
 
 const BASE_URL = "https://backend-9lc5.onrender.com/api/ver1/product";
 
@@ -39,20 +16,16 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
-  const [currentBanner, setCurrentBanner] = useState(0);
   const [visibleCount, setVisibleCount] = useState(8);
   const [recentSearches, setRecentSearches] = useState([]);
 
   const navigate = useNavigate();
-  const isMobile = window.innerWidth < 640;
 
-  // Load recent searches
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("recentSearches")) || [];
     setRecentSearches(stored);
   }, []);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -67,13 +40,6 @@ function Home() {
     fetchProducts();
   }, []);
 
-  // Banner rotation
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentBanner(prev => (prev + 1) % banners.length), 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
@@ -121,33 +87,6 @@ function Home() {
     }
   };
 
-  const handleRecentSearchClick = async (item) => {
-    setSearchId(item.id);
-    try {
-      const res = await axios.get(`${BASE_URL}/product/${item.id}`);
-      if (!res.data.data) throw new Error();
-      saveRecentSearch(item.id);
-      setError("");
-      setSearchActive(true);
-      setShowSearch(false);
-    } catch {
-      setError("Product does not exist.");
-      setSearchActive(true);
-      setShowSearch(false);
-    }
-  };
-
-  const clearRecentSearches = () => {
-    setRecentSearches([]);
-    localStorage.removeItem("recentSearches");
-  };
-
-  const removeSingleRecent = (id) => {
-    const updated = recentSearches.filter(item => item.id !== id);
-    setRecentSearches(updated);
-    localStorage.setItem("recentSearches", JSON.stringify(updated));
-  };
-
   const clearSearch = (e) => {
     e.stopPropagation();
     setSearchId("");
@@ -158,37 +97,22 @@ function Home() {
   if (loading) return <Loader />;
 
   return (
-    <div className="relative min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 hide-scrollbar">
+    <div className="relative min-h-screen bg-gray-50 px-4 sm:px-8 py-8 hide-scrollbar">
 
-      {/* Banner */}
-      <div className="relative w-full h-48 sm:h-64 md:h-72 lg:h-80 mb-6 overflow-hidden rounded-2xl shadow-lg">
-        <img
-          src={banners[currentBanner].src}
-          alt={banners[currentBanner].title}
-          className="w-full h-full object-cover transition-all duration-1000"
-        />
-        <div className={`absolute inset-0 bg-gradient-to-r ${banners[currentBanner].gradient} opacity-60`} />
-        <div className="absolute bottom-4 left-4 text-white">
-          <h2 className="text-xl sm:text-2xl font-bold">{banners[currentBanner].title}</h2>
-          <p className="text-sm sm:text-base">{banners[currentBanner].subtitle}</p>
-        </div>
-      </div>
-
-      {/* Floating Search */}
+      {/* Floating Search Button */}
       <div className="fixed top-6 right-6 z-50">
         <div className="relative">
           <button
             onClick={() => setShowSearch(true)}
-            className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-white p-3 rounded-full shadow-xl hover:scale-110 transition transform"
-            title="Search Product"
+            className="bg-blue-600 text-white p-3 rounded-full shadow-xl hover:scale-105 transition-transform"
           >
             <Search size={22} />
           </button>
+
           {searchActive && (
             <button
               onClick={clearSearch}
-              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 shadow hover:bg-red-700 transition"
-              title="Clear Search"
+              className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-1 shadow"
             >
               <X size={12} />
             </button>
@@ -196,38 +120,64 @@ function Home() {
         </div>
       </div>
 
-      {/* Products */}
+      {/* Slide Search */}
+      <AnimatePresence>
+        {showSearch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.3 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-40"
+              onClick={() => setShowSearch(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 120, damping: 15 }}
+              className="fixed top-0 right-0 w-80 h-full z-50 p-6 bg-white shadow-xl overflow-y-auto rounded-l-2xl"
+            >
+              <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  placeholder="Search by Product ID..."
+                  className="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Go</button>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Products Section */}
+      <h3 className="text-3xl font-bold mb-10 text-center tracking-wide text-gray-800">
+        All Products
+      </h3>
+
       {filteredProducts.length > 0 ? (
-        <>
-          <h3 className="text-2xl sm:text-3xl font-bold mb-6 mt-16 sm:mt-0 text-center">All Products</h3>
-          <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2">
-            <Suspense fallback={<Loader />}>
-              {filteredProducts.slice(0, visibleCount).map((p, i) => {
-                const isNew = p.createdAt && (Date.now() - new Date(p.createdAt).getTime()) <= 24*60*60*1000;
-                return (
-                  <motion.div
-                    key={p._id}
-                    whileHover={{ scale: 1.03 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="relative cursor-pointer"
-                    onClick={() => navigate(`/product/${p._id}`)}
-                  >
-                    <ProductCard product={p} />
-                    {isNew && (
-                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md animate-pulse">
-                        NEW
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </Suspense>
-          </div>
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 pb-16">
+          <Suspense fallback={<Loader />}>
+            {filteredProducts.slice(0, visibleCount).map((p, i) => (
+              <motion.div
+                key={p._id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="cursor-pointer"
+                onClick={() => navigate(`/product/${p._id}`)}
+              >
+                <ProductCard product={p} />
+              </motion.div>
+            ))}
+          </Suspense>
+        </div>
       ) : (
-        !error && <p className="text-center mt-10 text-gray-600">No products found.</p>
+        !error && <p className="text-center mt-16 text-gray-600 text-lg">No products found.</p>
       )}
 
       <style>{`
